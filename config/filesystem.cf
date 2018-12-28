@@ -8,3 +8,11 @@ config {
 
     let filesystems: []Filesystem
 }
+
+apply {
+    "Strin 3\"gLiteral"
+    true
+    0.3
+    false
+    14
+}

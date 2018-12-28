@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"unicode"
 	"unicode/utf8"
 	"dmeijboom/config/tokens"
@@ -46,6 +47,71 @@ func (lexer *Lexer) ident() (tokens.Token, error) {
 	}, nil
 }
 
+func (lexer *Lexer) number() (tokens.Token, error) {
+	num := ""
+	is_float := false
+
+	for !lexer.eof() {
+		current := lexer.current()
+
+		if !is_float && current == '.' {
+			is_float = true
+		} else if !unicode.IsNumber(current) {
+			break
+		}
+
+		num += string(lexer.next())
+	}
+	
+	if is_float {
+		floatval, err := strconv.ParseFloat(num, 64)
+		return tokens.Token{
+			Kind: tokens.Float,
+			Value: floatval,
+		}, err
+	}
+
+	numval, err := strconv.Atoi(num)
+	return tokens.Token{
+		Kind: tokens.Integer,
+		Value: numval,
+	}, err
+}
+
+func (lexer *Lexer) string() (tokens.Token, error) {
+	str := ""
+
+	lexer.next()
+
+	loop:
+	for {
+		if lexer.eof() {
+			return tokens.Token{}, fmt.Errorf("Unfinished string literal at %d:%d", lexer.line, lexer.pos)
+		}
+
+		current := lexer.current()
+
+		switch current {
+		case '"':
+			break loop
+		case '\\':
+			lexer.next()
+			str += string(lexer.next())
+			continue loop
+		default:
+			str += string(current)
+			lexer.next()
+		}
+	}
+
+	lexer.next()
+
+	return tokens.Token{
+		Kind: tokens.String,
+		Value: str,
+	}, nil
+}
+
 func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 	tokenList := []tokens.Token{}
 
@@ -58,6 +124,9 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 		var err error
 
 		switch current {
+		case '"':
+			token, err = lexer.string()
+			break
 		case '{':
 			token = tokens.Token{Kind: tokens.LBracket}
 			lexer.next()
@@ -90,8 +159,17 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 			lexer.next()
 			continue loop
 		default:
-			if unicode.IsLetter(current) {
+			if unicode.IsNumber(current) {
+				token, err = lexer.number()
+				break
+			} else if unicode.IsLetter(current) {
 				token, err = lexer.ident()
+
+				if err == nil &&
+					(token.Value == "true" || token.Value == "false") {
+					token.Kind = tokens.Boolean
+					token.Value = token.Value == "true"
+				}
 				break
 			}
 			

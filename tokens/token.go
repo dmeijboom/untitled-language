@@ -16,6 +16,10 @@ const (
 	RSqrBracket
 	Colon
 	Query
+	String
+	Boolean
+	Integer
+	Float
 )
 
 type Token struct {
@@ -46,6 +50,14 @@ func (token Token) String() string {
 		name = "Colon"
 	case Query:
 		name = "Query"
+	case String:
+		name = "String"
+	case Boolean:
+		name = "Boolean"
+	case Integer:
+		name = "Integer"
+	case Float:
+		name = "Float"
 	}
 
 	if token.Value == nil {
