@@ -1,0 +1,10 @@
+config {
+    type Filesystem: object {
+        uuid: string
+        path: string
+        type: string
+        opts: string?
+    }
+
+    let filesystems: []Filesystem
+}
