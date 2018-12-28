@@ -155,7 +155,7 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 			lexer.next()
 			lexer.line++
 			continue loop
-		case ' ':
+		case ' ', '\t', '\r':
 			lexer.next()
 			continue loop
 		default:
