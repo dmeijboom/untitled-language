@@ -34,3 +34,23 @@ type Type struct {
 func (type_ *Type) Loc() *tokens.Location {
 	return type_.Name.Loc()
 }
+
+
+type LiteralType int
+
+const (
+	String LiteralType = iota
+	Integer
+	Float
+	Boolean
+)
+
+type Literal struct {
+	Location *tokens.Location
+	Type LiteralType
+	Value interface{}
+}
+
+func (literal *Literal) Loc() *tokens.Location {
+	return literal.Location
+}

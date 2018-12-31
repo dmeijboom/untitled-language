@@ -142,16 +142,50 @@ func (parser *Parser) parseType() *ast.Type {
 	}
 }
 
+func (parser *Parser) expr() ast.Node {
+	token := parser.tok()
+
+	if parser.accept(tokens.String) {
+		return &ast.Literal{
+			Type: ast.String,
+			Value: token.Value,
+		}
+	} else if parser.accept(tokens.Integer) {
+		return &ast.Literal{
+			Type: ast.Integer,
+			Value: token.Value,
+		}
+	} else if parser.accept(tokens.Float) {
+		return &ast.Literal{
+			Type: ast.Float,
+			Value: token.Value,
+		}
+	} else if parser.accept(tokens.Boolean) {
+		return &ast.Literal{
+			Type: ast.Boolean,
+			Value: token.Value,
+		}
+	}
+
+	panic(fmt.Errorf("SyntaxError: unexpected %s", token))
+}
+
 func (parser *Parser) let() {
 	parser.expect(tokens.Keyword, "let")
 	name := parser.ident()
 	parser.expect(tokens.Colon)
 	type_ := parser.parseType()
 
+	var value ast.Node
+
+	if parser.accept(tokens.Equals) {
+		value = parser.expr()
+	}
+
 	parser.scope.Add(&ast.Let{
 		Name: name,
 		Type: type_,
-		Value: nil,
+		Value: value,
 	})
 }
 

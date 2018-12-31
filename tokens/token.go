@@ -17,6 +17,7 @@ const (
 	RSqrBracket
 	Colon
 	Query
+	Equals
 	String
 	Boolean
 	Integer
@@ -57,6 +58,8 @@ func (kind TokenKind) String() string {
 		return "Colon"
 	case Query:
 		return "Query"
+	case Equals:
+		return "Equals"
 	case String:
 		return "String"
 	case Boolean:

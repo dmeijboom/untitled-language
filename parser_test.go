@@ -33,6 +33,11 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 		parseCmpNode(t, node_a.Name, node_b.Name)
 		parseCmpNode(t, node_a.Type, node_b.Type)
 		break
+	case *ast.Literal:
+		node_b := b.(*ast.Literal)
+		assert.Equal(t, node_a.Type, node_b.Type, "Literal type doesn't match")
+		assert.Equal(t, node_a.Value, node_b.Value, "Literal value doesn't match")
+		break
 	case *ast.Ident:
 		node_b := b.(*ast.Ident)
 		assert.Equal(t, node_a.Value, node_b.Value, "Ident value doesn't match")
@@ -154,6 +159,20 @@ func TestLet(t *testing.T) {
 				Name: &ast.Ident{
 					Value: "string",
 				},
+			},
+		}},
+	}})
+
+	parseCmp(t, `testSection { let name: string = "Hello World" }`, []ast.Node{&ast.Section{
+		Name: &ast.Ident{Value: "testSection"},
+		Body: []ast.Node{&ast.Let{
+			Name: &ast.Ident{
+				Value: "name",
+			},
+			Type: &ast.Type{Name: &ast.Ident{Value: "string"}},
+			Value: &ast.Literal{
+				Type: ast.String,
+				Value: "Hello World",
 			},
 		}},
 	}})
