@@ -1,4 +1,4 @@
-config {
+exports {
     type Filesystem: object {
         uuid: string
         path: string

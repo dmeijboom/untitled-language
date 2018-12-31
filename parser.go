@@ -47,7 +47,9 @@ func (parser *Parser) accept(kind tokens.TokenKind) bool {
 func (parser *Parser) expect(kind tokens.TokenKind, value ...interface{}) *tokens.Token {
 	token := parser.tok()
 
-	if !parser.accept(kind) {
+	if !parser.hasTokens() {
+		panic(fmt.Errorf("Unexpected EOF"))
+	} else if !parser.accept(kind) {
 		panic(fmt.Errorf("SyntaxError: expecting type `%s` not `%s`", kind, token.Kind))
 	} else if len(value) > 0 && token.Value != value[0] {
 		panic(fmt.Errorf("SyntaxError: expecting token value %#v not %#v", value[0], token.Value))
@@ -57,6 +59,10 @@ func (parser *Parser) expect(kind tokens.TokenKind, value ...interface{}) *token
 }
 
 func (parser *Parser) tok() *tokens.Token {
+	if !parser.hasTokens() {
+		return nil
+	}
+
 	return &parser.tokens[parser.index]
 }
 
@@ -67,7 +73,13 @@ func (parser *Parser) next() *tokens.Token {
 }
 
 func (parser *Parser) wrapError(str string) error {
-	return fmt.Errorf("%s at %d:%d", str, parser.tok().Loc.Line, parser.tok().Loc.Column)
+	token := parser.tok()
+
+	if !parser.hasTokens() {
+		token = &parser.tokens[len(parser.tokens)-1]
+	}
+
+	return fmt.Errorf("%s at %d:%d", str, token.Loc.Line, token.Loc.Column)
 }
 
 func (parser *Parser) ident() *ast.Ident {
