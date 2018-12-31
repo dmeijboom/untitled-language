@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
+	"dmeijboom/config/compiler"
 )
 
 func main() {
@@ -29,14 +30,27 @@ func main() {
 	fmt.Println("\nPARSER")
 
 	parser := NewParser(tokens)
-	nodes, err := parser.Parse()
+	source, err := parser.Parse()
 
 	if err != nil {
 		panic(err)
 	}
 
-	for _, node := range nodes {
+	for _, node := range source.Body {
 		data, _ := json.MarshalIndent(node, "", "  ")
 		fmt.Println(string(data))
+	}
+
+	fmt.Println("\nCOMPILER")
+
+	compiler := compiler.NewCompiler(source)
+	instructions, err := compiler.Compile()
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, instruction := range instructions {
+		fmt.Printf("%#+v\n", instruction)
 	}
 }

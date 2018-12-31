@@ -110,6 +110,7 @@ func (parser *Parser) parseType() *ast.Type {
 
 	if parser.accept(tokens.LSqrBracket) {
 		parser.expect(tokens.RSqrBracket)
+		array = true
 	}
 
 	name := parser.ident()
@@ -248,7 +249,7 @@ func (parser *Parser) parseGlobal() {
 	}
 }
 
-func (parser *Parser) Parse() (nodes []ast.Node, err error) {
+func (parser *Parser) Parse() (source *ast.Source, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if _, ok := r.(error); ok {
@@ -260,7 +261,7 @@ func (parser *Parser) Parse() (nodes []ast.Node, err error) {
 	}()
 
 	parser.parseGlobal()
-	nodes = parser.closeScope()
+	source = &ast.Source{Body: parser.closeScope()}
 
 	return
 }

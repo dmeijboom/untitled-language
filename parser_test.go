@@ -75,13 +75,13 @@ func parseCmp(t *testing.T, input string, expected []ast.Node) {
 	assert.Nil(t, err)
 
 	parser := NewParser(tokens)
-	actual, err := parser.Parse()
+	source, err := parser.Parse()
 
 	assert.Nil(t, err)
-	assert.Equal(t, len(actual), len(expected), "AST Node length doesn't match")
+	assert.Equal(t, len(source.Body), len(expected), "AST Node length doesn't match")
 
-	for i := 0; i < len(actual); i++ {
-		parseCmpNode(t, actual[i], expected[i])
+	for i := 0; i < len(source.Body); i++ {
+		parseCmpNode(t, source.Body[i], expected[i])
 	}
 }
 

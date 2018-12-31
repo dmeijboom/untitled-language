@@ -12,3 +12,8 @@ type Stmt interface {
 	Node
 	stmtNode()
 }
+
+type Source struct {
+	Filename string
+	Body []Node
+}
