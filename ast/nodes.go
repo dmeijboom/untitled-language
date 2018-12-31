@@ -26,8 +26,9 @@ func (field *Field) Loc() *tokens.Location {
 
 type Type struct {
 	Name *Ident
-	Body []Field
+	Array bool
 	Optional bool
+	Fields []Field
 }
 
 func (type_ *Type) Loc() *tokens.Location {

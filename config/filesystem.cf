@@ -2,17 +2,9 @@ config {
     type Filesystem: object {
         uuid: string
         path: string
-        type: string
+        fstype: string
         opts: string?
     }
 
     let filesystems: []Filesystem
-}
-
-apply {
-    "Strin 3\"gLiteral"
-    true
-    0.3
-    false
-    14
 }

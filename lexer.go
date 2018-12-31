@@ -8,9 +8,14 @@ import (
 	"dmeijboom/config/tokens"
 )
 
+var keywords = []string{
+	"type", "let",
+}
+
 type Lexer struct {
 	pos int
 	line int
+	col int
 	input string
 }
 
@@ -30,6 +35,14 @@ func (lexer *Lexer) current() rune {
 func (lexer *Lexer) next() rune {
 	r, size := utf8.DecodeRuneInString(lexer.input[lexer.pos:])
 	lexer.pos += size
+
+	if r == '\n' {
+		lexer.line++
+		lexer.col = 0
+	} else {
+		lexer.col += size
+	}
+
 	return r
 }
 
@@ -112,13 +125,23 @@ func (lexer *Lexer) string() (tokens.Token, error) {
 	}, nil
 }
 
+func (lexer *Lexer) isKeyword(ident string) bool {
+	for _, keyword := range keywords {
+		if keyword == ident {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 	tokenList := []tokens.Token{}
 
 	loop:
 	for !lexer.eof() {
 		current := lexer.current()
-		start_pos := lexer.pos
+		start_pos := lexer.col
 
 		var token tokens.Token
 		var err error
@@ -153,7 +176,6 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 			break
 		case '\n':
 			lexer.next()
-			lexer.line++
 			continue loop
 		case ' ', '\t', '\r':
 			lexer.next()
@@ -169,6 +191,8 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 					(token.Value == "true" || token.Value == "false") {
 					token.Kind = tokens.Boolean
 					token.Value = token.Value == "true"
+				} else if lexer.isKeyword(token.Value.(string)) {
+					token.Kind = tokens.Keyword
 				}
 				break
 			}
