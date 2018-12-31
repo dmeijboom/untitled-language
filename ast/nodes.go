@@ -5,8 +5,8 @@ import (
 )
 
 type Ident struct {
-	Location *tokens.Location
 	Value string
+	Location *tokens.Location
 }
 
 func (ident *Ident) Loc() *tokens.Location {
@@ -46,9 +46,9 @@ const (
 )
 
 type Literal struct {
-	Location *tokens.Location
 	Type LiteralType
 	Value interface{}
+	Location *tokens.Location
 }
 
 func (literal *Literal) Loc() *tokens.Location {

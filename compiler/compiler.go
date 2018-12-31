@@ -36,6 +36,13 @@ func (compiler *Compiler) isBuiltin(name string) bool {
 
 func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 	switch node := nodeInterface.(type) {
+	case *ast.Block:
+		for _, subNode := range node.Body {
+			if err := compiler.compile(subNode); err != nil {
+				return err
+			}
+		}
+		break
 	case *ast.Field:
 		if err := compiler.compile(node.Type); err != nil {
 			return err
@@ -52,10 +59,8 @@ func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 			Location: node.Loc(),
 		})
 
-		for _, subNode := range node.Body {
-			if err := compiler.compile(subNode); err != nil {
-				return err
-			}
+		if err := compiler.compile(node.Block); err != nil {
+			return err
 		}
 		break
 	case *ast.Type:
@@ -125,10 +130,8 @@ func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 }
 
 func (compiler *Compiler) Compile() ([]Instruction, error) {
-	for _, node := range compiler.source.Body {
-		if err := compiler.compile(node); err != nil {
-			return nil, err
-		}
+	if err := compiler.compile(compiler.source.Block); err != nil {
+		return nil, err
 	}
 
 	return compiler.instructions, nil

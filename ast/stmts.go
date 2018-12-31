@@ -4,9 +4,19 @@ import (
 	"dmeijboom/config/tokens"
 )
 
+type Block struct {
+	Body []Node
+	Location *tokens.Location
+}
+
+func (block *Block) Loc() *tokens.Location {
+	return block.Location
+}
+
+
 type Section struct {
 	Name *Ident
-	Body []Node
+	Block *Block
 }
 
 func (section *Section) Loc() *tokens.Location {
@@ -39,4 +49,5 @@ func (let *Let) Loc() *tokens.Location {
  */
 func (section *Section) stmtNode() {}
 func (typedef *Typedef) stmtNode() {}
+func (block *Block) stmtNode() {}
 func (let *Let) stmtNode() {}

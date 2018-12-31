@@ -15,5 +15,5 @@ type Stmt interface {
 
 type Source struct {
 	Filename string
-	Body []Node
+	Block *Block
 }

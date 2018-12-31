@@ -95,13 +95,14 @@ func (parser *Parser) section() {
 	ident := parser.ident()
 	parser.expect(tokens.LBracket)
 	parser.openScope()
+	loc := parser.tok().Loc
 	parser.parseGlobal()
 	body := parser.closeScope()
 	parser.expect(tokens.RBracket)
 	
 	parser.scope.Add(&ast.Section{
 		Name: ident,
-		Body: body,
+		Block: &ast.Block{Body: body, Location: loc},
 	})
 }
 
@@ -261,7 +262,10 @@ func (parser *Parser) Parse() (source *ast.Source, err error) {
 	}()
 
 	parser.parseGlobal()
-	source = &ast.Source{Body: parser.closeScope()}
+	source = &ast.Source{Block: &ast.Block{
+		Body: parser.closeScope(),
+		Location: &tokens.Location{Line: 0, Column: 0},
+	}}
 
 	return
 }

@@ -19,14 +19,18 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 	assert.Equal(t, type_a, type_b, "AST nodes differ")
 
 	switch node_a := a.(type) {
-	case *ast.Section:
-		node_b := b.(*ast.Section)
-		parseCmpNode(t, node_a.Name, node_b.Name)
-		assert.Equal(t, len(node_a.Body), len(node_b.Body), "Section body count doesn't match")
+	case *ast.Block:
+		node_b := b.(*ast.Block)
+		assert.Equal(t, len(node_a.Body), len(node_b.Body), "Block body count doesn't match")
 
 		for i := 0; i < len(node_a.Body); i++ {
 			parseCmpNode(t, node_a.Body[i], node_b.Body[i])
 		}
+		break
+	case *ast.Section:
+		node_b := b.(*ast.Section)
+		parseCmpNode(t, node_a.Name, node_b.Name)
+		parseCmpNode(t, node_a.Block, node_b.Block)
 		break
 	case *ast.Typedef:
 		node_b := b.(*ast.Typedef)
@@ -78,23 +82,24 @@ func parseCmp(t *testing.T, input string, expected []ast.Node) {
 	source, err := parser.Parse()
 
 	assert.Nil(t, err)
-	assert.Equal(t, len(source.Body), len(expected), "AST Node length doesn't match")
+	assert.Equal(t, len(source.Block.Body), len(expected), "AST Node length doesn't match")
 
-	for i := 0; i < len(source.Body); i++ {
-		parseCmpNode(t, source.Body[i], expected[i])
+	for i := 0; i < len(source.Block.Body); i++ {
+		parseCmpNode(t, source.Block.Body[i], expected[i])
 	}
 }
 
 func TestSection(t *testing.T) {
 	parseCmp(t, "testSection {}", []ast.Node{&ast.Section{
-		Name: &ast.Ident{Value: "testSection"},
+		Name: &ast.Ident{"testSection", nil},
+		Block: &ast.Block{[]ast.Node{}, nil},
 	}})
 
 	parseCmp(t, `testSection {
 
 	} example {}`, []ast.Node{
-		&ast.Section{Name: &ast.Ident{Value: "testSection"}},
-		&ast.Section{Name: &ast.Ident{Value: "example"}},
+		&ast.Section{&ast.Ident{"testSection", nil}, &ast.Block{[]ast.Node{}, nil}},
+		&ast.Section{&ast.Ident{"example", nil}, &ast.Block{[]ast.Node{}, nil}},
 	})
 }
 
@@ -102,17 +107,17 @@ func TestTypedef(t *testing.T) {
 	parseCmp(t, `testSection {
 		type Test: int
 	}`, []ast.Node{&ast.Section{
-		Name: &ast.Ident{Value: "testSection"},
-		Body: []ast.Node{
+		Name: &ast.Ident{"testSection", nil},
+		Block: &ast.Block{[]ast.Node{
 			&ast.Typedef{
-				Name: &ast.Ident{Value: "Test"},
+				Name: &ast.Ident{"Test", nil},
 				Type: &ast.Type{
 					Array: false,
 					Optional: false,
-					Name: &ast.Ident{Value: "int"},
+					Name: &ast.Ident{"int", nil},
 				},
 			},
-		},
+		}, nil},
 	}})
 
 	parseCmp(t, `testSection {
@@ -122,58 +127,49 @@ func TestTypedef(t *testing.T) {
 			email: string?
 		}
 	}`, []ast.Node{&ast.Section{
-		Name: &ast.Ident{Value: "testSection"},
-		Body: []ast.Node{
+		&ast.Ident{"testSection", nil},
+		&ast.Block{[]ast.Node{
 			&ast.Typedef{
-				Name: &ast.Ident{Value: "User"},
+				Name: &ast.Ident{"User", nil},
 				Type: &ast.Type{
-					Name: &ast.Ident{Value: "object"},
+					Name: &ast.Ident{"object", nil},
 					Fields: []ast.Field{
 						ast.Field{
-							Name: &ast.Ident{Value: "name"},
-							Type: &ast.Type{Name: &ast.Ident{Value: "string"}},
+							Name: &ast.Ident{"name", nil},
+							Type: &ast.Type{Name: &ast.Ident{"string", nil}},
 						},
 						ast.Field{
-							Name: &ast.Ident{Value: "age"},
-							Type: &ast.Type{Name: &ast.Ident{Value: "int"}},
+							Name: &ast.Ident{"age", nil},
+							Type: &ast.Type{Name: &ast.Ident{"int", nil}},
 						},
 						ast.Field{
-							Name: &ast.Ident{Value: "email"},
-							Type: &ast.Type{Name: &ast.Ident{Value: "string"}, Optional: true},
+							Name: &ast.Ident{"email", nil},
+							Type: &ast.Type{Name: &ast.Ident{"string", nil}, Optional: true},
 						},
 					},
 				},
 			},
-		},
+		}, nil},
 	}})
 }
 
 func TestLet(t *testing.T) {
 	parseCmp(t, `testSection { let name: string }`, []ast.Node{&ast.Section{
-		Name: &ast.Ident{Value: "testSection"},
-		Body: []ast.Node{&ast.Let{
-			Name: &ast.Ident{
-				Value: "name",
-			},
+		&ast.Ident{"testSection", nil},
+		&ast.Block{[]ast.Node{&ast.Let{
+			Name: &ast.Ident{"name", nil},
 			Type: &ast.Type{
-				Name: &ast.Ident{
-					Value: "string",
-				},
+				Name: &ast.Ident{"string", nil},
 			},
-		}},
+		}}, nil},
 	}})
 
 	parseCmp(t, `testSection { let name: string = "Hello World" }`, []ast.Node{&ast.Section{
-		Name: &ast.Ident{Value: "testSection"},
-		Body: []ast.Node{&ast.Let{
-			Name: &ast.Ident{
-				Value: "name",
-			},
-			Type: &ast.Type{Name: &ast.Ident{Value: "string"}},
-			Value: &ast.Literal{
-				Type: ast.String,
-				Value: "Hello World",
-			},
-		}},
+		&ast.Ident{"testSection", nil},
+		&ast.Block{[]ast.Node{&ast.Let{
+			Name: &ast.Ident{"name", nil},
+			Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+			Value: &ast.Literal{ast.String, "Hello World", nil},
+		}}, nil},
 	}})
 }

@@ -36,7 +36,7 @@ func main() {
 		panic(err)
 	}
 
-	for _, node := range source.Body {
+	for _, node := range source.Block.Body {
 		data, _ := json.MarshalIndent(node, "", "  ")
 		fmt.Println(string(data))
 	}
