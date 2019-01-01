@@ -46,18 +46,15 @@ func (lexer *Lexer) next() rune {
 	return r
 }
 
-func (lexer *Lexer) ident() (tokens.Token, error) {
+func (lexer *Lexer) ident() string {
 	ident := ""
 
 	for !lexer.eof() &&
 		unicode.IsLetter(lexer.current()) {
 		ident += string(lexer.next())
 	}
-
-	return tokens.Token{
-		Kind: tokens.Ident,
-		Value: ident,
-	}, nil
+	
+	return ident
 }
 
 func (lexer *Lexer) number() (tokens.Token, error) {
@@ -189,14 +186,23 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 				token, err = lexer.number()
 				break
 			} else if unicode.IsLetter(current) {
-				token, err = lexer.ident()
+				ident := lexer.ident()
 
-				if err == nil &&
-					(token.Value == "true" || token.Value == "false") {
-					token.Kind = tokens.Boolean
-					token.Value = token.Value == "true"
-				} else if lexer.isKeyword(token.Value.(string)) {
-					token.Kind = tokens.Keyword
+				if ident == "true" || ident == "false" {
+					token = tokens.Token{
+						Kind: tokens.Boolean,
+						Value: ident == "true",
+					}
+				} else if lexer.isKeyword(ident) {
+					token = tokens.Token{
+						Kind: tokens.Keyword,
+						Value: ident,
+					}
+				} else {
+					token = tokens.Token{
+						Kind: tokens.Ident,
+						Value: ident,
+					}
 				}
 				break
 			}
