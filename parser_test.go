@@ -72,16 +72,20 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 	}
 }
 
-func parseCmp(t *testing.T, input string, expected []ast.Node) {
+func tokenizeAndParse(input string) (*ast.Source, error, error) {
 	lexer := NewLexer(input)
-	tokens, err := lexer.Lex()
-
-	assert.Nil(t, err)
-
+	tokens, errLexer := lexer.Lex()
 	parser := NewParser(tokens)
-	source, err := parser.Parse()
+	source, errParser := parser.Parse()
 
-	assert.Nil(t, err)
+	return source, errLexer, errParser
+}
+
+func parseCmp(t *testing.T, input string, expected []ast.Node) {
+	source, errLexer, errParser := tokenizeAndParse(input)
+
+	assert.Nil(t, errLexer, "Lexer shouldn't fail")
+	assert.Nil(t, errParser, "Parser should't fail")
 	assert.Equal(t, len(source.Block.Body), len(expected), "AST Node length doesn't match")
 
 	for i := 0; i < len(source.Block.Body); i++ {
@@ -172,4 +176,26 @@ func TestAssign(t *testing.T) {
 			Value: &ast.Literal{ast.String, "Hello World", nil},
 		}}, nil},
 	}})
+}
+
+func TestObjectType(t *testing.T) {
+	_, errLexer, errParser := tokenizeAndParse(`testSection {
+		type User: object {
+			name: string?
+			age: int
+		}
+	}`)
+
+	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
+	assert.Equal(t, errParser, nil, "Parser shouldn't fail")
+
+	_, errLexer, errParser = tokenizeAndParse(`testSection {
+		let user: object {
+			name: string?
+			age: int
+		}
+	}`)
+
+	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
+	assert.NotEqual(t, errParser, nil, "Object can't be used as a type outside typedef")
 }

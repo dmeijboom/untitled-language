@@ -43,6 +43,12 @@ func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 			}
 		}
 		break
+	case *ast.Literal:
+		compiler.add(&LoadVal{
+			Value: node.Value,
+			Location: node.Loc(),
+		})
+		break
 	case *ast.Field:
 		if err := compiler.compile(node.Type); err != nil {
 			return err
@@ -119,8 +125,15 @@ func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 			return err
 		}
 
+		if node.Value != nil {
+			if err := compiler.compile(node.Value); err != nil {
+				return err
+			}
+		}
+
 		compiler.add(&StoreVal{
 			Name: node.Name.Value,
+			HasValue: node.Value != nil,
 			Location: node.Loc(),
 		})
 		break

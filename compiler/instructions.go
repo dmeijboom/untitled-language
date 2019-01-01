@@ -55,8 +55,19 @@ func (makeType *MakeField) Loc() *tokens.Location {
 }
 
 
+type LoadVal struct {
+	Value interface{}
+	Location *tokens.Location
+}
+
+func (loadVal *LoadVal) Loc() *tokens.Location {
+	return loadVal.Location
+}
+
+
 type StoreVal struct {
 	Name string
+	HasValue bool
 	Location *tokens.Location
 }
 
@@ -72,3 +83,4 @@ func (setSection *SetSection) instruction() {}
 func (makeType *MakeType) instruction() {}
 func (makeField *MakeField) instruction() {}
 func (storeVal *StoreVal) instruction() {}
+func (loadVal *LoadVal) instruction() {}

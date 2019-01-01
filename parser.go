@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"errors"
 	"dmeijboom/config/ast"
 	"dmeijboom/config/tokens"
 )
@@ -35,8 +36,14 @@ func (parser *Parser) pushBack() {
 	parser.index--
 }
 
-func (parser *Parser) accept(kind tokens.TokenKind) bool {
-	if parser.tokens[parser.index].Kind == kind {
+func (parser *Parser) accept(kind tokens.TokenKind, value ...interface{}) bool {
+	token := parser.tok()
+
+	if token.Kind == kind {
+		if len(value) > 0 && token.Value != value[0] {
+			return false
+		}
+
 		parser.index++
 		return true
 	}
@@ -106,6 +113,36 @@ func (parser *Parser) section() {
 	})
 }
 
+func (parser *Parser) object() *ast.Type {
+	parser.expect(tokens.Ident, "object")
+	parser.pushBack()
+
+	name := parser.ident()
+	fields := []ast.Field{}
+
+	parser.accept(tokens.LBracket)
+
+	for parser.accept(tokens.Ident) {
+		parser.pushBack()
+		fieldName := parser.ident()
+		parser.expect(tokens.Colon)
+		fieldType := parser.parseType()
+
+		fields = append(fields, ast.Field{
+			Name: fieldName,
+			Type: fieldType,
+		})
+	}
+
+	parser.expect(tokens.RBracket)
+
+	return &ast.Type{
+		Name: name,
+		Fields: fields,
+		Optional: parser.accept(tokens.Query),
+	}
+}
+
 func (parser *Parser) parseType() *ast.Type {
 	array := false
 
@@ -115,31 +152,14 @@ func (parser *Parser) parseType() *ast.Type {
 	}
 
 	name := parser.ident()
-	var fields []ast.Field
 
-	if name.Value == "object" &&
-		parser.accept(tokens.LBracket) {
-		fields = []ast.Field{}
-
-		for parser.accept(tokens.Ident) {
-			parser.pushBack()
-			fieldName := parser.ident()
-			parser.expect(tokens.Colon)
-			fieldType := parser.parseType()
-
-			fields = append(fields, ast.Field{
-				Name: fieldName,
-				Type: fieldType,
-			})
-		}
-
-		parser.expect(tokens.RBracket)
+	if name.Value == "object" {
+		panic(errors.New("SyntaxError: Cannot use object type outside typedef"))
 	}
 
 	return &ast.Type{
 		Name: name,
 		Array: array,
-		Fields: fields,
 		Optional: parser.accept(tokens.Query),
 	}
 }
@@ -195,11 +215,19 @@ func (parser *Parser) typedef() {
 	parser.expect(tokens.Keyword, "type")
 	name := parser.ident()
 	parser.expect(tokens.Colon)
-	type_ := parser.parseType()
+
+	var typeval *ast.Type
+
+	if parser.accept(tokens.Ident, "object") {
+		parser.pushBack()
+		typeval = parser.object()
+	} else {
+		typeval = parser.parseType()
+	}
 
 	parser.scope.Add(&ast.Typedef{
 		Name: name,
-		Type: type_,
+		Type: typeval,
 	})
 }
 
