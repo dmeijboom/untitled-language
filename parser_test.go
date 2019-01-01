@@ -63,8 +63,8 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 		parseCmpNode(t, node_a.Name, node_b.Name)
 		parseCmpNode(t, node_a.Type, node_b.Type)
 		break
-	case *ast.Let:
-		node_b := b.(*ast.Let)
+	case *ast.Assign:
+		node_b := b.(*ast.Assign)
 		parseCmpNode(t, node_a.Name, node_b.Name)
 		parseCmpNode(t, node_a.Type, node_b.Type)
 		parseCmpNode(t, node_a.Value, node_b.Value)
@@ -153,10 +153,10 @@ func TestTypedef(t *testing.T) {
 	}})
 }
 
-func TestLet(t *testing.T) {
+func TestAssign(t *testing.T) {
 	parseCmp(t, `testSection { let name: string }`, []ast.Node{&ast.Section{
 		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{&ast.Let{
+		&ast.Block{[]ast.Node{&ast.Assign{
 			Name: &ast.Ident{"name", nil},
 			Type: &ast.Type{
 				Name: &ast.Ident{"string", nil},
@@ -166,7 +166,7 @@ func TestLet(t *testing.T) {
 
 	parseCmp(t, `testSection { let name: string = "Hello World" }`, []ast.Node{&ast.Section{
 		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{&ast.Let{
+		&ast.Block{[]ast.Node{&ast.Assign{
 			Name: &ast.Ident{"name", nil},
 			Type: &ast.Type{Name: &ast.Ident{"string", nil}},
 			Value: &ast.Literal{ast.String, "Hello World", nil},

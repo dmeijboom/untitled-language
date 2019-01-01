@@ -34,14 +34,14 @@ func (typedef *Typedef) Loc() *tokens.Location {
 }
 
 
-type Let struct {
+type Assign struct {
 	Name *Ident
 	Type *Type
 	Value Node
 }
 
-func (let *Let) Loc() *tokens.Location {
-	return let.Name.Loc()
+func (assign *Assign) Loc() *tokens.Location {
+	return assign.Name.Loc()
 }
 
 /**
@@ -50,4 +50,4 @@ func (let *Let) Loc() *tokens.Location {
 func (section *Section) stmtNode() {}
 func (typedef *Typedef) stmtNode() {}
 func (block *Block) stmtNode() {}
-func (let *Let) stmtNode() {}
+func (assign *Assign) stmtNode() {}

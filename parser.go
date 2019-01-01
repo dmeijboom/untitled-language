@@ -172,7 +172,7 @@ func (parser *Parser) expr() ast.Node {
 	panic(fmt.Errorf("SyntaxError: unexpected %s", token))
 }
 
-func (parser *Parser) let() {
+func (parser *Parser) assign() {
 	parser.expect(tokens.Keyword, "let")
 	name := parser.ident()
 	parser.expect(tokens.Colon)
@@ -184,7 +184,7 @@ func (parser *Parser) let() {
 		value = parser.expr()
 	}
 
-	parser.scope.Add(&ast.Let{
+	parser.scope.Add(&ast.Assign{
 		Name: name,
 		Type: type_,
 		Value: value,
@@ -223,7 +223,7 @@ func (parser *Parser) stmt() {
 			parser.typedef()
 			break
 		case "let":
-			parser.let()
+			parser.assign()
 			break
 		default:
 			matched = false

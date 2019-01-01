@@ -114,7 +114,7 @@ func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 			Location: node.Loc(),
 		})
 		break
-	case *ast.Let:
+	case *ast.Assign:
 		if err := compiler.compile(node.Type); err != nil {
 			return err
 		}
