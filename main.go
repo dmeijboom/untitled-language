@@ -22,13 +22,13 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("LEXER")
+	fmt.Println("LEXER\n---")
 
 	for _, token := range tokens {
 		fmt.Println(token)
 	}
 
-	fmt.Println("\nPARSER")
+	fmt.Println("\nPARSER\n---")
 
 	parser := NewParser(tokens)
 	source, err := parser.Parse()
@@ -42,7 +42,7 @@ func main() {
 		fmt.Println(reflect.TypeOf(node).Elem().Name() + " " + string(data))
 	}
 
-	fmt.Println("\nCOMPILER")
+	fmt.Println("\nCOMPILER\n---")
 
 	compiler := compiler.NewCompiler(source)
 	instructions, err := compiler.Compile()

@@ -36,6 +36,8 @@ func (compiler *Compiler) isBuiltin(name string) bool {
 
 func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 	switch node := nodeInterface.(type) {
+	case *ast.Initialize:
+		break
 	case *ast.Block:
 		for _, subNode := range node.Body {
 			if err := compiler.compile(subNode); err != nil {

@@ -19,6 +19,20 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 	assert.Equal(t, type_a, type_b, "AST nodes differ")
 
 	switch node_a := a.(type) {
+	case *ast.InitializeField:
+		node_b := b.(*ast.InitializeField)
+
+		parseCmpNode(t, node_a.Name, node_b.Name)
+		parseCmpNode(t, node_a.Value, node_b.Value)
+		break
+	case *ast.Initialize:
+		node_b := b.(*ast.Initialize)
+		assert.Equal(t, len(node_a.Fields), len(node_b.Fields), "Initialize field count doesn't match")
+
+		for i := 0; i < len(node_a.Fields); i++ {
+			parseCmpNode(t, &node_a.Fields[i], &node_b.Fields[i])
+		}
+		break
 	case *ast.Block:
 		node_b := b.(*ast.Block)
 		assert.Equal(t, len(node_a.Body), len(node_b.Body), "Block body count doesn't match")
@@ -116,8 +130,6 @@ func TestTypedef(t *testing.T) {
 			&ast.Typedef{
 				Name: &ast.Ident{"Test", nil},
 				Type: &ast.Type{
-					Array: false,
-					Optional: false,
 					Name: &ast.Ident{"int", nil},
 				},
 			},
@@ -190,7 +202,7 @@ func TestObjectType(t *testing.T) {
 	assert.Equal(t, errParser, nil, "Parser shouldn't fail")
 
 	_, errLexer, errParser = tokenizeAndParse(`testSection {
-		let user: object {
+		let User: object {
 			name: string?
 			age: int
 		}
@@ -202,11 +214,80 @@ func TestObjectType(t *testing.T) {
 
 func TestObjectOptional(t *testing.T) {
 	_, errLexer, errParser := tokenizeAndParse(`testSection {
-		type user: object {
+		type User: object {
 			name: string
 		}?
 	}`)
 
 	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
 	assert.NotEqual(t, errParser, nil, "Optional objects are not allowed in typedefs")
+}
+
+func TestInitializer(t *testing.T) {
+	parseCmp(t, `testSection {
+		type User: object {
+			email: string
+			name: string
+			level: int
+		}
+
+		let admin: User = new {
+			email = "admin@admin.com"
+			name = "Administrator"
+			level = 3
+		}
+	}`, []ast.Node{&ast.Section{
+		&ast.Ident{"testSection", nil},
+		&ast.Block{[]ast.Node{
+			&ast.Typedef{
+				Name: &ast.Ident{"User", nil},
+				Type: &ast.Type{
+					Name: &ast.Ident{"object", nil},
+					Fields: []ast.Field{
+						ast.Field{
+							Name: &ast.Ident{"email", nil},
+							Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+						},
+						ast.Field{
+							Name: &ast.Ident{"name", nil},
+							Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+						},
+						ast.Field{
+							Name: &ast.Ident{"level", nil},
+							Type: &ast.Type{Name: &ast.Ident{"int", nil}},
+						},
+					},
+				},
+			},
+			&ast.Assign{
+				Name: &ast.Ident{"admin", nil},
+				Type: &ast.Type{Name: &ast.Ident{"User", nil}},
+				Value: &ast.Initialize{
+					Fields: []ast.InitializeField{
+						ast.InitializeField{
+							Name: &ast.Ident{"email", nil},
+							Value: &ast.Literal{
+								Type: ast.String,
+								Value: "admin@admin.com",
+							},
+						},
+						ast.InitializeField{
+							Name: &ast.Ident{"name", nil},
+							Value: &ast.Literal{
+								Type: ast.String,
+								Value: "Administrator",
+							},
+						},
+						ast.InitializeField{
+							Name: &ast.Ident{"level", nil},
+							Value: &ast.Literal{
+								Type: ast.Integer,
+								Value: 3,
+							},
+						},
+					},
+				},
+			},
+		}, nil},
+	}})
 }

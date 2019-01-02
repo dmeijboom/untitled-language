@@ -36,6 +36,27 @@ func (type_ *Type) Loc() *tokens.Location {
 }
 
 
+type InitializeField struct {
+	Name *Ident
+	Value Node
+	Location *tokens.Location
+}
+
+func (initField *InitializeField) Loc() *tokens.Location {
+	return initField.Location
+}
+
+
+type Initialize struct {
+	Fields []InitializeField
+	Location *tokens.Location
+}
+
+func (init *Initialize) Loc() *tokens.Location {
+	return init.Location
+}
+
+
 type LiteralType int
 
 const (

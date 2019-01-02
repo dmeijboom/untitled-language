@@ -113,7 +113,7 @@ func (parser *Parser) section() {
 	})
 }
 
-func (parser *Parser) object() *ast.Type {
+func (parser *Parser) objectdef() *ast.Type {
 	parser.expect(tokens.Ident, "object")
 	parser.pushBack()
 
@@ -163,10 +163,44 @@ func (parser *Parser) parseType() *ast.Type {
 	}
 }
 
+func (parser *Parser) init() *ast.Initialize {
+	new := parser.expect(tokens.Keyword, "new")
+	parser.expect(tokens.LBracket)
+
+	fields := []ast.InitializeField{}
+
+	for {
+		if !parser.accept(tokens.Ident) {
+			break
+		}
+
+		parser.pushBack()
+		name := parser.ident()
+
+		parser.expect(tokens.Equals)
+
+		fields = append(fields, ast.InitializeField{
+			Name: name,
+			Value: parser.expr(),
+			Location: name.Loc(),
+		})
+	}
+
+	parser.expect(tokens.RBracket)
+
+	return &ast.Initialize{
+		Fields: fields,
+		Location: new.Loc,
+	}
+}
+
 func (parser *Parser) expr() ast.Node {
 	token := parser.tok()
 
-	if parser.accept(tokens.String) {
+	if parser.accept(tokens.Keyword, "new") {
+		parser.pushBack()
+		return parser.init()
+	} else if parser.accept(tokens.String) {
 		return &ast.Literal{
 			Type: ast.String,
 			Value: token.Value,
@@ -219,7 +253,7 @@ func (parser *Parser) typedef() {
 
 	if parser.accept(tokens.Ident, "object") {
 		parser.pushBack()
-		typeval = parser.object()
+		typeval = parser.objectdef()
 	} else {
 		typeval = parser.parseType()
 	}

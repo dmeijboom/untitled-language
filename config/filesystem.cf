@@ -8,4 +8,10 @@ exports {
 
     let filesystems: []Filesystem
     let name: string = "Dillen Meijboom"
+
+    let fs: Filesystem = new {
+        uuid = "hello"
+        path = "/"
+        fstype = "btrfs"
+    }
 }

@@ -9,7 +9,7 @@ import (
 )
 
 var keywords = []string{
-	"type", "let",
+	"type", "let", "new",
 }
 
 type Lexer struct {
