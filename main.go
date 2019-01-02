@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"encoding/json"
 	"dmeijboom/config/compiler"
 )
@@ -38,7 +39,7 @@ func main() {
 
 	for _, node := range source.Block.Body {
 		data, _ := json.MarshalIndent(node, "", "  ")
-		fmt.Println(string(data))
+		fmt.Println(reflect.TypeOf(node).Elem().Name() + " " + string(data))
 	}
 
 	fmt.Println("\nCOMPILER")
@@ -51,6 +52,7 @@ func main() {
 	}
 
 	for _, instruction := range instructions {
-		fmt.Printf("%#+v\n", instruction)
+		data, _ := json.Marshal(instruction)
+		fmt.Println(reflect.TypeOf(instruction).Elem().Name() + " " + string(data))
 	}
 }

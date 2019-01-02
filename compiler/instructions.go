@@ -11,7 +11,6 @@ const (
 	IntegerType
 	BooleanType
 	FloatType
-	ObjectType
 	UserType
 )
 
@@ -31,12 +30,31 @@ func (setSection *SetSection) Loc() *tokens.Location {
 }
 
 
-type MakeType struct {
+type MakeObject struct {
+	Fields int
+	Location *tokens.Location
+}
+
+func (makeObject *MakeObject) Loc() *tokens.Location {
+	return makeObject.Location
+}
+
+
+type LoadType struct {
 	TypeName string
 	Type TypeId
-	Fields int
 	Array bool
 	Optional bool
+	Location *tokens.Location
+}
+
+func (loadType *LoadType) Loc() *tokens.Location {
+	return loadType.Location
+}
+
+
+type MakeType struct {
+	Name string
 	Location *tokens.Location
 }
 
@@ -80,7 +98,9 @@ func (storeVal *StoreVal) Loc() *tokens.Location {
  * Instruction definitions
  */
 func (setSection *SetSection) instruction() {}
-func (makeType *MakeType) instruction() {}
 func (makeField *MakeField) instruction() {}
+func (makeObject *MakeObject) instruction() {}
+func (loadType *LoadType) instruction() {}
+func (makeType *MakeType) instruction() {}
 func (storeVal *StoreVal) instruction() {}
 func (loadVal *LoadVal) instruction() {}

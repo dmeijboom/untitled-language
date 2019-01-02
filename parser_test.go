@@ -199,3 +199,14 @@ func TestObjectType(t *testing.T) {
 	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
 	assert.NotEqual(t, errParser, nil, "Object can't be used as a type outside typedef")
 }
+
+func TestObjectOptional(t *testing.T) {
+	_, errLexer, errParser := tokenizeAndParse(`testSection {
+		type user: object {
+			name: string
+		}?
+	}`)
+
+	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
+	assert.NotEqual(t, errParser, nil, "Optional objects are not allowed in typedefs")
+}

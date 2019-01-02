@@ -70,52 +70,56 @@ func (compiler *Compiler) compile(nodeInterface ast.Node) error {
 		}
 		break
 	case *ast.Type:
-		makeType := &MakeType{
-			Array: node.Array,
-			Fields: len(node.Fields),
-			Optional: node.Optional,
-			Location: node.Loc(),
-		}
-
-		if len(node.Fields) > 0 {
-			for _, field := range node.Fields {
-				if err := compiler.compile(&field); err != nil {
-					return err
+		if node.Name.Value == "object" {
+			if len(node.Fields) > 0 {
+				for _, field := range node.Fields {
+					if err := compiler.compile(&field); err != nil {
+						return err
+					}
 				}
 			}
+
+			compiler.add(&MakeObject{
+				Fields: len(node.Fields),
+				Location: node.Loc(),
+			})
+			break
+		}
+
+		loadType := &LoadType{
+			Array: node.Array,
+			Optional: node.Optional,
+			Location: node.Loc(),
 		}
 
 		if compiler.isBuiltin(node.Name.Value) {
 			switch node.Name.Value {
 			case "int":
-				makeType.Type = IntegerType
+				loadType.Type = IntegerType
 				break
 			case "bool":
-				makeType.Type = BooleanType
+				loadType.Type = BooleanType
 				break
 			case "string":
-				makeType.Type = StringType
+				loadType.Type = StringType
 				break
 			case "float":
-				makeType.Type = FloatType
-				break
-			case "object":
-				makeType.Type = ObjectType
+				loadType.Type = FloatType
 				break
 			}
 		} else {
-			makeType.Type = UserType
-			makeType.TypeName = node.Name.Value
+			loadType.Type = UserType
+			loadType.TypeName = node.Name.Value
 		}
 
-		compiler.add(makeType)
+		compiler.add(loadType)
 		break
 	case *ast.Typedef:
 		if err := compiler.compile(node.Type); err != nil {
 			return err
 		}
 
-		compiler.add(&StoreVal{
+		compiler.add(&MakeType{
 			Name: node.Name.Value,
 			Location: node.Loc(),
 		})

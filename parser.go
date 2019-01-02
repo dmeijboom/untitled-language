@@ -139,7 +139,6 @@ func (parser *Parser) object() *ast.Type {
 	return &ast.Type{
 		Name: name,
 		Fields: fields,
-		Optional: parser.accept(tokens.Query),
 	}
 }
 
