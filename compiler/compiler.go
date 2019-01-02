@@ -34,124 +34,102 @@ func (compiler *Compiler) isBuiltin(name string) bool {
 	return false
 }
 
-func (compiler *Compiler) compile(nodeInterface ast.Node) error {
-	switch node := nodeInterface.(type) {
-	case *ast.Initialize:
-		break
-	case *ast.Block:
-		for _, subNode := range node.Body {
-			if err := compiler.compile(subNode); err != nil {
-				return err
-			}
-		}
-		break
-	case *ast.Literal:
-		compiler.add(&LoadVal{
-			Value: node.Value,
+func (compiler *Compiler) VisitIdent(ident *ast.Ident) {
+
+}
+
+func (compiler *Compiler) VisitField(field *ast.Field) {
+	compiler.add(&MakeField{
+		Name: field.Name.Value,
+		Location: field.Loc(),
+	})
+}
+
+func (compiler *Compiler) VisitType(node *ast.Type) {
+	if node.Name.Value == "object" {
+		compiler.add(&MakeObject{
+			Fields: len(node.Fields),
 			Location: node.Loc(),
 		})
-		break
-	case *ast.Field:
-		if err := compiler.compile(node.Type); err != nil {
-			return err
-		}
-
-		compiler.add(&MakeField{
-			Name: node.Name.Value,
-			Location: node.Loc(),
-		})
-		break
-	case *ast.Section:
-		compiler.add(&SetSection{
-			Name: node.Name.Value,
-			Location: node.Loc(),
-		})
-
-		if err := compiler.compile(node.Block); err != nil {
-			return err
-		}
-		break
-	case *ast.Type:
-		if node.Name.Value == "object" {
-			if len(node.Fields) > 0 {
-				for _, field := range node.Fields {
-					if err := compiler.compile(&field); err != nil {
-						return err
-					}
-				}
-			}
-
-			compiler.add(&MakeObject{
-				Fields: len(node.Fields),
-				Location: node.Loc(),
-			})
-			break
-		}
-
-		loadType := &LoadType{
-			Array: node.Array,
-			Optional: node.Optional,
-			Location: node.Loc(),
-		}
-
-		if compiler.isBuiltin(node.Name.Value) {
-			switch node.Name.Value {
-			case "int":
-				loadType.Type = IntegerType
-				break
-			case "bool":
-				loadType.Type = BooleanType
-				break
-			case "string":
-				loadType.Type = StringType
-				break
-			case "float":
-				loadType.Type = FloatType
-				break
-			}
-		} else {
-			loadType.Type = UserType
-			loadType.TypeName = node.Name.Value
-		}
-
-		compiler.add(loadType)
-		break
-	case *ast.Typedef:
-		if err := compiler.compile(node.Type); err != nil {
-			return err
-		}
-
-		compiler.add(&MakeType{
-			Name: node.Name.Value,
-			Location: node.Loc(),
-		})
-		break
-	case *ast.Assign:
-		if err := compiler.compile(node.Type); err != nil {
-			return err
-		}
-
-		if node.Value != nil {
-			if err := compiler.compile(node.Value); err != nil {
-				return err
-			}
-		}
-
-		compiler.add(&StoreVal{
-			Name: node.Name.Value,
-			HasValue: node.Value != nil,
-			Location: node.Loc(),
-		})
-		break
+		return
 	}
 
-	return nil
+	loadType := &LoadType{
+		Array: node.Array,
+		Optional: node.Optional,
+		Location: node.Loc(),
+	}
+
+	if compiler.isBuiltin(node.Name.Value) {
+		switch node.Name.Value {
+		case "int":
+			loadType.Type = IntegerType
+			break
+		case "bool":
+			loadType.Type = BooleanType
+			break
+		case "string":
+			loadType.Type = StringType
+			break
+		case "float":
+			loadType.Type = FloatType
+			break
+		}
+	} else {
+		loadType.Type = UserType
+		loadType.TypeName = node.Name.Value
+	}
+
+	compiler.add(loadType)
+}
+
+func (compiler *Compiler) VisitInitialize(init *ast.Initialize) {
+
+}
+
+func (compiler *Compiler) VisitInitializeField(initField *ast.InitializeField) {
+
+}
+
+func (compiler *Compiler) VisitLiteral(literal *ast.Literal) {
+	compiler.add(&LoadVal{
+		Value: literal.Value,
+		Location: literal.Loc(),
+	})
+}
+
+func (compiler *Compiler) VisitBlock(block *ast.Block) {
+
+}
+
+func (compiler *Compiler) VisitSection(section *ast.Section) {
+	compiler.add(&SetSection{
+		Name: section.Name.Value,
+		Location: section.Loc(),
+	})
+}
+
+func (compiler *Compiler) VisitTypedef(typedef *ast.Typedef) {
+	compiler.add(&MakeType{
+		Name: typedef.Name.Value,
+		Location: typedef.Loc(),
+	})
+}
+
+func (compiler *Compiler) VisitAssign(assign *ast.Assign) {
+	compiler.add(&StoreVal{
+		Name: assign.Name.Value,
+		HasValue: assign.Value != nil,
+		Location: assign.Loc(),
+	})
+}
+
+func (compiler *Compiler) VisitSource(source *ast.Source) {
+
 }
 
 func (compiler *Compiler) Compile() ([]Instruction, error) {
-	if err := compiler.compile(compiler.source.Block); err != nil {
-		return nil, err
-	}
+	compiler.source.Accept(compiler)
 
 	return compiler.instructions, nil
 }
