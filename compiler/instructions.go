@@ -73,6 +73,26 @@ func (makeType *MakeField) Loc() *tokens.Location {
 }
 
 
+type SetField struct {
+	Name string
+	Location *tokens.Location
+}
+
+func (setField *SetField) Loc() *tokens.Location {
+	return setField.Location
+}
+
+
+type NewObject struct {
+	Fields int
+	Location *tokens.Location
+}
+
+func (newObject *NewObject) Loc() *tokens.Location {
+	return newObject.Location
+}
+
+
 type LoadVal struct {
 	Value interface{}
 	Location *tokens.Location
@@ -104,3 +124,5 @@ func (loadType *LoadType) instruction() {}
 func (makeType *MakeType) instruction() {}
 func (storeVal *StoreVal) instruction() {}
 func (loadVal *LoadVal) instruction() {}
+func (setField *SetField) instruction() {}
+func (newObject *NewObject) instruction() {}

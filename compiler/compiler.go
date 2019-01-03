@@ -84,11 +84,17 @@ func (compiler *Compiler) VisitType(node *ast.Type) {
 }
 
 func (compiler *Compiler) VisitInitialize(init *ast.Initialize) {
-
+	compiler.add(&NewObject{
+		Fields: len(init.Fields),
+		Location: init.Loc(),
+	})
 }
 
 func (compiler *Compiler) VisitInitializeField(initField *ast.InitializeField) {
-
+	compiler.add(&SetField{
+		Name: initField.Name.Value,
+		Location: initField.Loc(),
+	})
 }
 
 func (compiler *Compiler) VisitLiteral(literal *ast.Literal) {
@@ -130,6 +136,5 @@ func (compiler *Compiler) VisitSource(source *ast.Source) {
 
 func (compiler *Compiler) Compile() ([]Instruction, error) {
 	compiler.source.Accept(compiler)
-
 	return compiler.instructions, nil
 }
