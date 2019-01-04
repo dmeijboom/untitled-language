@@ -93,13 +93,22 @@ func (newObject *NewObject) Loc() *tokens.Location {
 }
 
 
-type LoadVal struct {
+type Initialize struct {
+	Location *tokens.Location
+}
+
+func (init *Initialize) Loc() *tokens.Location {
+	return init.Location
+}
+
+
+type LoadConst struct {
 	Value interface{}
 	Location *tokens.Location
 }
 
-func (loadVal *LoadVal) Loc() *tokens.Location {
-	return loadVal.Location
+func (loadConst *LoadConst) Loc() *tokens.Location {
+	return loadConst.Location
 }
 
 
@@ -119,10 +128,12 @@ func (storeVal *StoreVal) Loc() *tokens.Location {
  */
 func (setSection *SetSection) instruction() {}
 func (makeField *MakeField) instruction() {}
-func (makeObject *MakeObject) instruction() {}
 func (loadType *LoadType) instruction() {}
 func (makeType *MakeType) instruction() {}
 func (storeVal *StoreVal) instruction() {}
-func (loadVal *LoadVal) instruction() {}
+func (loadConst *LoadConst) instruction() {}
+// func (loadVal *LoadVal) instruction() {}
 func (setField *SetField) instruction() {}
 func (newObject *NewObject) instruction() {}
+func (makeObject *MakeObject) instruction() {}
+func (initialize *Initialize) instruction() {}

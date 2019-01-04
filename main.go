@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"reflect"
 	"encoding/json"
+	"dmeijboom/config/vm"
 	"dmeijboom/config/compiler"
 )
 
@@ -54,5 +55,14 @@ func main() {
 	for _, instruction := range instructions {
 		data, _ := json.Marshal(instruction)
 		fmt.Println(reflect.TypeOf(instruction).Elem().Name() + " " + string(data))
+	}
+
+	fmt.Println("\nRUN\n---")
+
+	vm := vm.NewVm(instructions)
+	err = vm.Run()
+
+	if err != nil {
+		panic(err)
 	}
 }

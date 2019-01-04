@@ -4,6 +4,7 @@ type Visitor interface {
 	VisitIdent(ident *Ident)
 	VisitField(field *Field)
 	VisitType(type_ *Type)
+	VisitPreInitialize(init *Initialize)
 	VisitInitialize(init *Initialize)
 	VisitInitializeField(initField *InitializeField)
 	VisitLiteral(literal *Literal)

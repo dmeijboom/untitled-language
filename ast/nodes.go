@@ -83,6 +83,8 @@ func (init *Initialize) Loc() *tokens.Location {
 }
 
 func (init *Initialize) Accept(visitor Visitor) {
+	visitor.VisitPreInitialize(init)
+
 	if len(init.Fields) > 0 {
 		for _, field := range init.Fields {
 			field.Accept(visitor)

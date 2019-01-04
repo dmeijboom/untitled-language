@@ -83,9 +83,15 @@ func (compiler *Compiler) VisitType(node *ast.Type) {
 	compiler.add(loadType)
 }
 
-func (compiler *Compiler) VisitInitialize(init *ast.Initialize) {
+func (compiler *Compiler) VisitPreInitialize(init *ast.Initialize) {
 	compiler.add(&NewObject{
 		Fields: len(init.Fields),
+		Location: init.Loc(),
+	})
+}
+
+func (compiler *Compiler) VisitInitialize(init *ast.Initialize) {
+	compiler.add(&Initialize{
 		Location: init.Loc(),
 	})
 }
@@ -98,7 +104,7 @@ func (compiler *Compiler) VisitInitializeField(initField *ast.InitializeField) {
 }
 
 func (compiler *Compiler) VisitLiteral(literal *ast.Literal) {
-	compiler.add(&LoadVal{
+	compiler.add(&LoadConst{
 		Value: literal.Value,
 		Location: literal.Loc(),
 	})
