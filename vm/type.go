@@ -46,7 +46,7 @@ func (type_ *Type) FullName() string {
 	return typeName
 }
 
-func (type_ *Type) Compare(otherType *Type) bool {
+func (type_ *Type) Equals(otherType *Type) bool {
 	if type_.Id != otherType.Id ||
 		type_.Name != otherType.Name ||
 		len(type_.GenericParams) != len(otherType.GenericParams) {
@@ -55,7 +55,7 @@ func (type_ *Type) Compare(otherType *Type) bool {
 
 	if len(type_.GenericParams) > 0 {
 		for i := 0; i < len(type_.GenericParams); i++ {
-			if !(&type_.GenericParams[i]).Compare(&otherType.GenericParams[i]) {
+			if !(&type_.GenericParams[i]).Equals(&otherType.GenericParams[i]) {
 				return false
 			}
 		}

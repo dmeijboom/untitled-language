@@ -143,90 +143,73 @@ func TestSection(t *testing.T) {
 }
 
 func TestTypedef(t *testing.T) {
-	parseCmp(t, `testSection {
-		type Test: int
-	}`, []ast.Node{&ast.Section{
-		Name: &ast.Ident{"testSection", nil},
-		Block: &ast.Block{[]ast.Node{
-			&ast.Typedef{
-				Name: &ast.Ident{"Test", nil},
-				Type: &ast.Type{
-					Name: &ast.Ident{"int", nil},
-				},
+	parseCmp(t, `type Test: int`, []ast.Node{
+		&ast.Typedef{
+			Name: &ast.Ident{"Test", nil},
+			Type: &ast.Type{
+				Name: &ast.Ident{"int", nil},
 			},
-		}, nil},
-	}})
+		},
+	})
 
-	parseCmp(t, `testSection {
-		type User: object {
+	parseCmp(t, `type User: object {
 			name: string
 			age: int
 			email: string?
-		}
-	}`, []ast.Node{&ast.Section{
-		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{
-			&ast.Typedef{
-				Name: &ast.Ident{"User", nil},
-				Type: &ast.Type{
-					Name: &ast.Ident{"object", nil},
-					Fields: []ast.Field{
-						ast.Field{
-							Name: &ast.Ident{"name", nil},
-							Type: &ast.Type{Name: &ast.Ident{"string", nil}},
-						},
-						ast.Field{
-							Name: &ast.Ident{"age", nil},
-							Type: &ast.Type{Name: &ast.Ident{"int", nil}},
-						},
-						ast.Field{
-							Name: &ast.Ident{"email", nil},
-							Type: &ast.Type{Name: &ast.Ident{"string", nil}, Optional: true},
-						},
+		}`, []ast.Node{&ast.Typedef{
+			Name: &ast.Ident{"User", nil},
+			Type: &ast.Type{
+				Name: &ast.Ident{"object", nil},
+				Fields: []ast.Field{
+					ast.Field{
+						Name: &ast.Ident{"name", nil},
+						Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+					},
+					ast.Field{
+						Name: &ast.Ident{"age", nil},
+						Type: &ast.Type{Name: &ast.Ident{"int", nil}},
+					},
+					ast.Field{
+						Name: &ast.Ident{"email", nil},
+						Type: &ast.Type{Name: &ast.Ident{"string", nil}, Optional: true},
 					},
 				},
 			},
-		}, nil},
-	}})
+		},
+	})
 }
 
 func TestAssign(t *testing.T) {
-	parseCmp(t, `testSection { let name: string }`, []ast.Node{&ast.Section{
-		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{&ast.Assign{
+	parseCmp(t, `let name: string`, []ast.Node{
+		&ast.Assign{
 			Name: &ast.Ident{"name", nil},
 			Type: &ast.Type{
 				Name: &ast.Ident{"string", nil},
 			},
-		}}, nil},
-	}})
+		},
+	})
 
-	parseCmp(t, `testSection { let name: string = "Hello World" }`, []ast.Node{&ast.Section{
-		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{&ast.Assign{
+	parseCmp(t, `let name: string = "Hello World"`, []ast.Node{
+		&ast.Assign{
 			Name: &ast.Ident{"name", nil},
 			Type: &ast.Type{Name: &ast.Ident{"string", nil}},
 			Value: &ast.Literal{ast.String, "Hello World", nil},
-		}}, nil},
-	}})
+		},
+	})
 }
 
 func TestObjectType(t *testing.T) {
-	_, errLexer, errParser := tokenizeAndParse(`testSection {
-		type User: object {
-			name: string?
-			age: int
-		}
+	_, errLexer, errParser := tokenizeAndParse(`type User: object {
+		name: string?
+		age: int
 	}`)
 
 	assert.Equal(t, nil, errLexer, "Lexer shouldn't fail")
 	assert.Equal(t, nil, errParser, "Parser shouldn't fail")
 
-	_, errLexer, errParser = tokenizeAndParse(`testSection {
-		let User: object {
-			name: string?
-			age: int
-		}
+	_, errLexer, errParser = tokenizeAndParse(`let User: object {
+		name: string?
+		age: int
 	}`)
 
 	assert.Equal(t, nil, errLexer, "Lexer shouldn't fail")
@@ -234,105 +217,92 @@ func TestObjectType(t *testing.T) {
 }
 
 func TestObjectOptional(t *testing.T) {
-	_, errLexer, errParser := tokenizeAndParse(`testSection {
-		type User: object {
-			name: string
-		}?
-	}`)
+	_, errLexer, errParser := tokenizeAndParse(`type User: object {
+		name: string
+	}?`)
 
 	assert.Equal(t, nil, errLexer, "Lexer shouldn't fail")
 	assert.NotEqual(t, nil, errParser, "Optional objects are not allowed in typedefs")
 }
 
 func TestCall(t *testing.T) {
-	parseCmp(t, `testSection {
-		writeln(name)
-	}`, []ast.Node{&ast.Section{
-		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{&ast.ExprStmt{
+	parseCmp(t, "writeln(name)", []ast.Node{
+		&ast.ExprStmt{
 			Expr: &ast.Call{
 				Args: []ast.Expr{&ast.Ident{"name", nil}},
 				Callee: &ast.Ident{"writeln", nil},
 			},
-		}}, nil},
-	}})
+		},
+	})
 }
 
 func TestInitializer(t *testing.T) {
-	parseCmp(t, `testSection {
-		type User: object {
-			email: string
-			name: string
-			level: int
-		}
+	parseCmp(t, `type User: object {
+		email: string
+		name: string
+		level: int
+	}
 
-		let admin: User = new {
-			email = "admin@admin.com"
-			name = "Administrator"
-			level = 3
-		}
-	}`, []ast.Node{&ast.Section{
-		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{
-			&ast.Typedef{
-				Name: &ast.Ident{"User", nil},
-				Type: &ast.Type{
-					Name: &ast.Ident{"object", nil},
-					Fields: []ast.Field{
-						ast.Field{
-							Name: &ast.Ident{"email", nil},
-							Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+	let admin: User = new {
+		email = "admin@admin.com"
+		name = "Administrator"
+		level = 3
+	}`, []ast.Node{
+		&ast.Typedef{
+			Name: &ast.Ident{"User", nil},
+			Type: &ast.Type{
+				Name: &ast.Ident{"object", nil},
+				Fields: []ast.Field{
+					ast.Field{
+						Name: &ast.Ident{"email", nil},
+						Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+					},
+					ast.Field{
+						Name: &ast.Ident{"name", nil},
+						Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+					},
+					ast.Field{
+						Name: &ast.Ident{"level", nil},
+						Type: &ast.Type{Name: &ast.Ident{"int", nil}},
+					},
+				},
+			},
+		},
+		&ast.Assign{
+			Name: &ast.Ident{"admin", nil},
+			Type: &ast.Type{Name: &ast.Ident{"User", nil}},
+			Value: &ast.Initialize{
+				Fields: []ast.InitializeField{
+					ast.InitializeField{
+						Name: &ast.Ident{"email", nil},
+						Value: &ast.Literal{
+							Type: ast.String,
+							Value: "admin@admin.com",
 						},
-						ast.Field{
-							Name: &ast.Ident{"name", nil},
-							Type: &ast.Type{Name: &ast.Ident{"string", nil}},
+					},
+					ast.InitializeField{
+						Name: &ast.Ident{"name", nil},
+						Value: &ast.Literal{
+							Type: ast.String,
+							Value: "Administrator",
 						},
-						ast.Field{
-							Name: &ast.Ident{"level", nil},
-							Type: &ast.Type{Name: &ast.Ident{"int", nil}},
+					},
+					ast.InitializeField{
+						Name: &ast.Ident{"level", nil},
+						Value: &ast.Literal{
+							Type: ast.Integer,
+							Value: 3,
 						},
 					},
 				},
 			},
-			&ast.Assign{
-				Name: &ast.Ident{"admin", nil},
-				Type: &ast.Type{Name: &ast.Ident{"User", nil}},
-				Value: &ast.Initialize{
-					Fields: []ast.InitializeField{
-						ast.InitializeField{
-							Name: &ast.Ident{"email", nil},
-							Value: &ast.Literal{
-								Type: ast.String,
-								Value: "admin@admin.com",
-							},
-						},
-						ast.InitializeField{
-							Name: &ast.Ident{"name", nil},
-							Value: &ast.Literal{
-								Type: ast.String,
-								Value: "Administrator",
-							},
-						},
-						ast.InitializeField{
-							Name: &ast.Ident{"level", nil},
-							Value: &ast.Literal{
-								Type: ast.Integer,
-								Value: 3,
-							},
-						},
-					},
-				},
-			},
-		}, nil},
-	}})
+		},
+	})
 }
 
 func TestMember(t *testing.T) {
-	parseCmp(t, `testSection {
-		writeln(obj.field)
-	}`, []ast.Node{&ast.Section{
-		&ast.Ident{"testSection", nil},
-		&ast.Block{[]ast.Node{&ast.ExprStmt{
+	parseCmp(t, "writeln(obj.field)", []ast.Node{
+		&ast.ExprStmt{
 			Expr: &ast.Call{
 				Callee: &ast.Ident{"writeln", nil},
 				Args: []ast.Expr{&ast.Member{
@@ -340,6 +310,6 @@ func TestMember(t *testing.T) {
 					Field: &ast.Ident{"field", nil},
 				}},
 			},
-		}}, nil},
-	}})
+		},
+	})
 }

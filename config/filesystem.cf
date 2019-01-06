@@ -1,18 +1,16 @@
-exports {
-    type Filesystem: object {
-        uuid: string
-        path: string
-        fstype: string
-        opts: string?
-    }
-
-    let filesystems: []Filesystem
-
-    let fs: Filesystem = new {
-        uuid = "hello"
-        path = "/"
-        fstype = "btrfs"
-    }
-
-    filesystems.add(fs)
+type Filesystem: object {
+    uuid: string
+    path: string
+    fstype: string
+    opts: string?
 }
+
+let filesystems: []Filesystem
+
+let fs: Filesystem = new {
+    uuid = "hello"
+    path = "/"
+    fstype = "btrfs"
+}
+
+filesystems.add(fs)

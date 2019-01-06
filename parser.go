@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"errors"
+	"strings"
 	"dmeijboom/config/ast"
 	"dmeijboom/config/tokens"
 )
@@ -39,7 +40,8 @@ func (parser *Parser) pushBack() {
 func (parser *Parser) accept(kind tokens.TokenKind, value ...interface{}) bool {
 	token := parser.tok()
 
-	if token.Kind == kind {
+	if token != nil &&
+		token.Kind == kind {
 		if len(value) > 0 && token.Value != value[0] {
 			return false
 		}
@@ -55,7 +57,7 @@ func (parser *Parser) expect(kind tokens.TokenKind, value ...interface{}) *token
 	token := parser.tok()
 
 	if !parser.hasTokens() {
-		panic(fmt.Errorf("Unexpected EOF"))
+		panic(fmt.Errorf("SyntaxError: Unexpected EOF"))
 	} else if !parser.accept(kind) {
 		panic(fmt.Errorf("SyntaxError: expecting type `%s` not `%s`", kind, token.Kind))
 	} else if len(value) > 0 && token.Value != value[0] {
@@ -366,7 +368,7 @@ func (parser *Parser) parseGlobal() {
 func (parser *Parser) Parse() (source *ast.Source, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			if _, ok := r.(error); ok {
+			if _, ok := r.(error); ok && strings.Contains(r.(error).Error(), "SyntaxError:") {
 				err = parser.wrapError(r.(error).Error())
 			} else {
 				panic(r)

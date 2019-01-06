@@ -116,10 +116,11 @@ func (vm *VirtualMachine) processLoadType(instruction *compiler.LoadType) error 
     }
 
     if !instruction.Array {
+		rtype.Optional = instruction.Optional
         vm.dataStack.Push(rtype)
         return nil
-    }
-
+	}
+	
     vm.dataStack.Push(&Type{
 		Id: ArrayType,
 		Name: "array",
@@ -148,21 +149,27 @@ func (vm *VirtualMachine) processMakeType(instruction *compiler.MakeType) error 
 
 func (vm *VirtualMachine) processStoreVal(instruction *compiler.StoreVal) error {
 	name := vm.dataStack.Pop().(string)
-	value := &Value{
-		Mutable: true,
-	}
+	var rawValue interface{}
 
     if instruction.HasValue {
-        value.Value = vm.dataStack.Pop().(interface{})
+		rawValue = vm.dataStack.Pop().(interface{})
 	}
 
-	value.Type = vm.dataStack.Pop().(*Type)
+	valueType := vm.dataStack.Pop().(*Type)
+	value, isValue := rawValue.(*Value)
 
-	if !instruction.HasValue {
-		if value.Type.Id == ArrayType {
-			value.Value = NewArray()
-		} else if !value.Type.Optional {
-			return fmt.Errorf("Cannot store `%s` without a value (%s is non-optional)", name, value.Type.FullName())
+	if rawValue == nil && valueType.Id == ArrayType {
+		rawValue = NewArray()
+	}
+
+	if rawValue == nil && !valueType.Optional {
+		return fmt.Errorf("Cannot store `%s` without a value (%s is non-optional)", name, valueType.FullName())
+	} else if isValue && !value.Type.Equals(valueType) {
+		return fmt.Errorf("Cannot store `%s` type %s as type %s", name, value.Type.FullName(), valueType.FullName())
+	} else if !isValue {
+		value = &Value{
+			Type: valueType,
+			Value: rawValue,
 		}
 	}
 
@@ -251,7 +258,7 @@ func (vm *VirtualMachine) processMakeCall(instruction *compiler.MakeCall) error 
 		fn = vm.lookupFunction(lookup)
 
 		if fn == nil {
-			return fmt.Errorf("Cannot find function `%s` on %s", lookup.Name, lookup.Value.Type.FullName())
+			return fmt.Errorf("Cannot find function `%s` for %s", lookup.Name, lookup.Value.Type.FullName())
 		}
 	} else {
 		callable := elem.(*Value)
