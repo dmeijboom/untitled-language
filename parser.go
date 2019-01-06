@@ -206,8 +206,7 @@ func (parser *Parser) member() ast.Expr {
 	}
 }
 
-func (parser *Parser) call() ast.Expr {
-	ident := parser.ident()
+func (parser *Parser) call(callee ast.Expr) ast.Expr {
 	parser.expect(tokens.LParent)
 
 	args := []ast.Expr{}
@@ -218,8 +217,8 @@ func (parser *Parser) call() ast.Expr {
 
 	return &ast.Call{
 		Args: args,
-		Callee: ident,
-		Location: ident.Loc(),
+		Callee: callee,
+		Location: callee.Loc(),
 	}
 }
 
@@ -230,18 +229,23 @@ func (parser *Parser) expr() ast.Expr {
 		parser.pushBack()
 		return parser.init()
 	} else if parser.accept(tokens.Ident) {
-		if parser.accept(tokens.LParent) {
+		var expr ast.Expr
+
+		if parser.accept(tokens.Interpunct) {
 			parser.pushBack()
 			parser.pushBack()
-			return parser.call()
-		} else if parser.accept(tokens.Interpunct) {
+			expr = parser.member()
+		} else {
 			parser.pushBack()
-			parser.pushBack()
-			return parser.member()
+			expr = parser.ident()
 		}
 
-		parser.pushBack()
-		return parser.ident()
+		if parser.accept(tokens.LParent) {
+			parser.pushBack()
+			return parser.call(expr)
+		}
+
+		return expr
 	} else if parser.accept(tokens.String) {
 		return &ast.Literal{
 			Type: ast.String,

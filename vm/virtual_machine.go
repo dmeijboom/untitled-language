@@ -47,13 +47,13 @@ func (vm *VirtualMachine) peek() compiler.Instruction {
 func (vm *VirtualMachine) convertType(compilerType compiler.TypeId) *Type {
 	switch compilerType {
 	case compiler.StringType:
-		return &Type{Id: StringType}
+		return &Type{Id: StringType, Name: "string"}
 	case compiler.IntegerType:
-		return &Type{Id: IntegerType}
+		return &Type{Id: IntegerType, Name: "int"}
 	case compiler.BooleanType:
-		return &Type{Id: BooleanType}
+		return &Type{Id: BooleanType, Name: "bool"}
 	case compiler.FloatType:
-		return &Type{Id: FloatType}
+		return &Type{Id: FloatType, Name: "float"}
 	}
 
 	panic("Unknown type in convertType")
@@ -70,6 +70,11 @@ func (vm *VirtualMachine) lookupType(name string) *Type {
 		frame = frame.Parent
 	}
 
+	return nil
+}
+
+func (vm *VirtualMachine) lookupFunction(lookup *FunctionLookup) *Function {
+	
 	return nil
 }
 
@@ -114,9 +119,11 @@ func (vm *VirtualMachine) processLoadType(instruction *compiler.LoadType) error 
         vm.dataStack.Push(rtype)
         return nil
     }
-    
+
     vm.dataStack.Push(&Type{
-        Id: ArrayType,
+		Id: ArrayType,
+		Name: "array",
+		Optional: instruction.Optional,
         GenericParams: []Type{*rtype},
     })
 	return nil
@@ -147,9 +154,17 @@ func (vm *VirtualMachine) processStoreVal(instruction *compiler.StoreVal) error 
 
     if instruction.HasValue {
         value.Value = vm.dataStack.Pop().(interface{})
-    }
+	}
 
 	value.Type = vm.dataStack.Pop().(*Type)
+
+	if !instruction.HasValue {
+		if value.Type.Id == ArrayType {
+			value.Value = NewArray()
+		} else if !value.Type.Optional {
+			return fmt.Errorf("Cannot store `%s` without a value (%s is non-optional)", name, value.Type.FullName())
+		}
+	}
 
     vm.callStack.Frame().Data[name] = value
 
@@ -170,19 +185,26 @@ func (vm *VirtualMachine) processLoadName(instruction *compiler.LoadName) error 
 func (vm *VirtualMachine) processLoadMember(instruction *compiler.LoadMember) error {
 	name := vm.dataStack.Pop().(string)
 	value := vm.dataStack.Pop().(*Value)
+	_, isCall := vm.peek().(*compiler.MakeCall)
 
-	if value.Type.Id != ObjectType {
-		return fmt.Errorf("Cannot use non-object type as object")
-	}
-
-	object := value.Value.(*Object)
-
-	if field, exist := object.Fields[name]; exist {
-		vm.dataStack.Push(field)
+	if isCall {
+		vm.dataStack.Push(&FunctionLookup{
+			Name: name,
+			Value: value,
+		})
 		return nil
+	} else if value.Type.Id == ObjectType {
+		object := value.Value.(*Object)
+
+		if field, exist := object.Fields[name]; exist {
+			vm.dataStack.Push(field)
+			return nil
+		}
+
+		return fmt.Errorf("%s does not contain the `%s` field", value.Type.FullName(), name)
 	}
 
-	return fmt.Errorf("%s does not contain the `%s` field", value.Type.Name, name)
+	return fmt.Errorf("Cannot use non-object %s as an object", value.Type.FullName())
 }
 
 func (vm *VirtualMachine) processLoadVal(instruction *compiler.LoadVal) error {
@@ -221,13 +243,26 @@ func (vm *VirtualMachine) processNewObject(instruction *compiler.NewObject) erro
 }
 
 func (vm *VirtualMachine) processMakeCall(instruction *compiler.MakeCall) error {
-	callable := vm.dataStack.Pop().(*Value)
+	elem := vm.dataStack.Pop()
+	lookup, isLookup := elem.(*FunctionLookup)
+	var fn *Function
 
-	if callable.Type.Id != FunctionType {
-		return fmt.Errorf("Cannot call non-function type")
+	if isLookup {
+		fn = vm.lookupFunction(lookup)
+
+		if fn == nil {
+			return fmt.Errorf("Cannot find function `%s` on %s", lookup.Name, lookup.Value.Type.FullName())
+		}
+	} else {
+		callable := elem.(*Value)
+
+		if callable.Type.Id != FunctionType {
+			return fmt.Errorf("Cannot call non-function type")
+		}
+
+		fn = callable.Value.(*Function)
 	}
 
-	fn := callable.Value.(*Function)
 	args := []*Value{}
 
 	for i := 0; i < instruction.Args; i++ {

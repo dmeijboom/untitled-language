@@ -7,6 +7,11 @@ package vm
 
 type GoFunc func (values []*Value)
 
+type FunctionLookup struct {
+	Name string
+	Value *Value
+}
+
 type Function struct {
 	Name string
 	Func GoFunc

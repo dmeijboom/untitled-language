@@ -14,5 +14,5 @@ exports {
         fstype = "btrfs"
     }
 
-    writeln(fs.uuid)
+    filesystems.add(fs)
 }
