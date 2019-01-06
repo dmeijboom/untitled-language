@@ -223,6 +223,20 @@ func TestObjectOptional(t *testing.T) {
 	assert.NotEqual(t, errParser, nil, "Optional objects are not allowed in typedefs")
 }
 
+func TestCall(t *testing.T) {
+	parseCmp(t, `testSection {
+		writeln(name)
+	}`, []ast.Node{&ast.Section{
+		&ast.Ident{"testSection", nil},
+		&ast.Block{[]ast.Node{&ast.ExprStmt{
+			Expr: &ast.Call{
+				Args: []ast.Node{&ast.Ident{"name", nil}},
+				Callee: &ast.Ident{"writeln", nil},
+			},
+		}}, nil},
+	}})
+}
+
 func TestInitializer(t *testing.T) {
 	parseCmp(t, `testSection {
 		type User: object {
