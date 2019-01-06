@@ -58,8 +58,19 @@ func main() {
 
 	fmt.Println("\nRUN\n---")
 
-	vm := vm.NewVm(instructions)
-	err = vm.Run()
+	machine := vm.NewVm(instructions)
+	machine.Set("writeln", &vm.Value{
+		Type: &vm.Type{Id: vm.FunctionType},
+		Mutable: false,
+		Value: &vm.Function{
+			Name: "writeln",
+			Func: func(values []*vm.Value) {
+				fmt.Println(values[0].Value)
+			},
+		},
+	})
+
+	err = machine.Run()
 
 	if err != nil {
 		panic(err)

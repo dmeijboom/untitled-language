@@ -83,6 +83,22 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 		parseCmpNode(t, node_a.Type, node_b.Type)
 		parseCmpNode(t, node_a.Value, node_b.Value)
 		break
+	case *ast.ExprStmt:
+		node_b := b.(*ast.ExprStmt)
+		parseCmpNode(t, node_a.Expr, node_b.Expr)
+		break
+	case *ast.Call:
+		node_b := b.(*ast.Call)
+		assert.Equal(t, len(node_b.Args), len(node_a.Args), "Call arguments length doesn't match")
+
+		for i := 0; i < len(node_a.Args); i++ {
+			parseCmpNode(t, node_a.Args[i], node_b.Args[i])
+		}
+
+		parseCmpNode(t, node_a.Callee, node_b.Callee)
+		break
+	default:
+		panic(node_a)
 	}
 }
 
@@ -230,7 +246,7 @@ func TestCall(t *testing.T) {
 		&ast.Ident{"testSection", nil},
 		&ast.Block{[]ast.Node{&ast.ExprStmt{
 			Expr: &ast.Call{
-				Args: []ast.Node{&ast.Ident{"name", nil}},
+				Args: []ast.Expr{&ast.Ident{"name", nil}},
 				Callee: &ast.Ident{"writeln", nil},
 			},
 		}}, nil},

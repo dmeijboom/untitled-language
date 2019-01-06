@@ -1,22 +1,33 @@
 package vm
 
 import (
+	"fmt"
 	"dmeijboom/config/compiler"
 )
 
 type VirtualMachine struct {
 	index int
+	root *Frame
 	callStack *CallStack
 	dataStack *DataStack
 	instructions []compiler.Instruction
 }
 
 func NewVm(instructions []compiler.Instruction) *VirtualMachine {
-	return &VirtualMachine{
+	vm := &VirtualMachine{
+		root: NewFrame(RootFrame, nil),
 		callStack: NewCallStack(),
 		dataStack: NewDataStack(),
 		instructions: instructions,
 	}
+
+	vm.callStack.Push(vm.root)
+
+	return vm
+}
+
+func (vm *VirtualMachine) Set(name string, value *Value) {
+	vm.root.Data[name] = value
 }
 
 func (vm *VirtualMachine) hasInstructions() bool {
@@ -142,7 +153,7 @@ func (vm *VirtualMachine) processStoreVal(instruction *compiler.StoreVal) error 
 
     vm.callStack.Frame().Data[name] = value
 
-    println("@TODO: var validation")
+    // println("@TODO: var validation")
 	return nil
 }
 
@@ -156,9 +167,16 @@ func (vm *VirtualMachine) processLoadName(instruction *compiler.LoadName) error 
 	return nil
 }
 
-// func (vm *VirtualMachine) processLoadVal(instruction *compiler.LoadVal) error {
-// 	return nil
-// }
+func (vm *VirtualMachine) processLoadVal(instruction *compiler.LoadVal) error {
+	name := vm.dataStack.Pop().(string)
+
+	if value := vm.callStack.Frame().Get(name); value != nil {
+		vm.dataStack.Push(value)
+		return nil
+	}
+
+	return fmt.Errorf("Name `%s` not found", name)
+}
 
 func (vm *VirtualMachine) processSetField(instruction *compiler.SetField) error {
 	value := vm.dataStack.Pop().(interface{})
@@ -175,12 +193,31 @@ func (vm *VirtualMachine) processSetField(instruction *compiler.SetField) error 
 
     vm.dataStack.Push(object)
 
-	println("@TODO: field validation")
+	// println("@TODO: field validation")
 	return nil
 }
 
 func (vm *VirtualMachine) processNewObject(instruction *compiler.NewObject) error {
 	vm.dataStack.Push(NewObject())
+	return nil
+}
+
+func (vm *VirtualMachine) processMakeCall(instruction *compiler.MakeCall) error {
+	callable := vm.dataStack.Pop().(*Value)
+
+	if callable.Type.Id != FunctionType {
+		return fmt.Errorf("Cannot call non-function type")
+	}
+
+	fn := callable.Value.(*Function)
+	args := []*Value{}
+
+	for i := 0; i < instruction.Args; i++ {
+		args = append(args, vm.dataStack.Pop().(*Value))
+	}
+
+	fn.Func(args)
+
 	return nil
 }
 
@@ -198,7 +235,7 @@ func (vm *VirtualMachine) processMakeObject(instruction *compiler.MakeObject) er
 }
 
 func (vm *VirtualMachine) processInitialize(instruction *compiler.Initialize) error {
-	println("@TODO: object validation")
+	// println("@TODO: object validation")
 	return nil
 }
 
@@ -206,8 +243,9 @@ func (vm *VirtualMachine) processInitialize(instruction *compiler.Initialize) er
 func (vm *VirtualMachine) Run() error {
 	for vm.hasInstructions() {
 		var err error
+		instr := vm.next()
 
-		switch instruction := vm.next().(type) {
+		switch instruction := instr.(type) {
 		case *compiler.OpenSection:
 			err = vm.processOpenSection(instruction)
 			break
@@ -223,6 +261,9 @@ func (vm *VirtualMachine) Run() error {
 		case *compiler.MakeType:
 			err = vm.processMakeType(instruction)
 			break
+		case *compiler.MakeCall:
+			err = vm.processMakeCall(instruction)
+			break
 		case *compiler.StoreVal:
 			err = vm.processStoreVal(instruction)
 			break
@@ -232,9 +273,9 @@ func (vm *VirtualMachine) Run() error {
 		case *compiler.LoadName:
 			err = vm.processLoadName(instruction)
 			break
-		// case *compiler.LoadVal:
-		// 	err = vm.processLoadVal(instruction)
-		// 	break
+		case *compiler.LoadVal:
+			err = vm.processLoadVal(instruction)
+			break
 		case *compiler.SetField:
 			err = vm.processSetField(instruction)
 			break
@@ -252,7 +293,7 @@ func (vm *VirtualMachine) Run() error {
 		}
 
 		if err != nil {
-			return err
+			return fmt.Errorf("%s at %d:%d", err.Error(), instr.Loc().Line, instr.Loc().Column)
 		}
 	}
 

@@ -116,6 +116,25 @@ func (loadConst *LoadConst) Loc() *tokens.Location {
 }
 
 
+type LoadVal struct {
+ 	Location *tokens.Location
+}
+
+func (loadVal *LoadVal) Loc() *tokens.Location {
+	return loadVal.Location
+}
+
+
+type MakeCall struct {
+	Args int
+ 	Location *tokens.Location
+}
+
+func (makeCall *MakeCall) Loc() *tokens.Location {
+	return makeCall.Location
+}
+
+
 type LoadName struct {
 	Name string
 	Location *tokens.Location
@@ -147,8 +166,9 @@ func (loadName *LoadName) instruction() {}
 func (makeType *MakeType) instruction() {}
 func (storeVal *StoreVal) instruction() {}
 func (loadConst *LoadConst) instruction() {}
-// func (loadVal *LoadVal) instruction() {}
+func (loadVal *LoadVal) instruction() {}
 func (setField *SetField) instruction() {}
 func (newObject *NewObject) instruction() {}
 func (makeObject *MakeObject) instruction() {}
+func (makeCall *MakeCall) instruction() {}
 func (initialize *Initialize) instruction() {}

@@ -140,11 +140,24 @@ func (compiler *Compiler) VisitAssign(assign *ast.Assign) {
 }
 
 func (compiler *Compiler) VisitCall(call *ast.Call) {
-	
+	compiler.add(&MakeCall{
+		Args: len(call.Args),
+		Location: call.Loc(),
+	})
 }
 
 func (compiler *Compiler) VisitExprStmt(exprStmt *ast.ExprStmt) {
 	
+}
+
+func (compiler *Compiler) VisitInlineExpr(expr ast.Expr) {
+	switch expr.(type) {
+	case *ast.Ident:
+		compiler.add(&LoadVal{
+			Location: expr.Loc(),
+		})
+		break
+	}
 }
 
 func (compiler *Compiler) VisitSource(source *ast.Source) {

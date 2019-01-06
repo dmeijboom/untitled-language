@@ -4,20 +4,6 @@ import (
 	"dmeijboom/config/tokens"
 )
 
-type Ident struct {
-	Value string
-	Location *tokens.Location
-}
-
-func (ident *Ident) Loc() *tokens.Location {
-	return ident.Location
-}
-
-func (ident *Ident) Accept(visitor Visitor) {
-	visitor.VisitIdent(ident)
-}
-
-
 type Field struct {
 	Name *Ident
 	Type *Type
@@ -59,7 +45,7 @@ func (type_ *Type) Accept(visitor Visitor) {
 
 type InitializeField struct {
 	Name *Ident
-	Value Node
+	Value Expr
 	Location *tokens.Location
 }
 
@@ -70,74 +56,6 @@ func (initField *InitializeField) Loc() *tokens.Location {
 func (initField *InitializeField) Accept(visitor Visitor) {
 	initField.Name.Accept(visitor)
 	initField.Value.Accept(visitor)
+	visitor.VisitInlineExpr(initField.Value)
 	visitor.VisitInitializeField(initField)
-}
-
-
-type Initialize struct {
-	Fields []InitializeField
-	Location *tokens.Location
-}
-
-func (init *Initialize) Loc() *tokens.Location {
-	return init.Location
-}
-
-func (init *Initialize) Accept(visitor Visitor) {
-	visitor.VisitPreInitialize(init)
-
-	if len(init.Fields) > 0 {
-		for _, field := range init.Fields {
-			field.Accept(visitor)
-		}
-	}
-
-	visitor.VisitInitialize(init)
-}
-
-
-type LiteralType int
-
-const (
-	String LiteralType = iota
-	Integer
-	Float
-	Boolean
-)
-
-type Literal struct {
-	Type LiteralType
-	Value interface{}
-	Location *tokens.Location
-}
-
-func (literal *Literal) Loc() *tokens.Location {
-	return literal.Location
-}
-
-func (literal *Literal) Accept(visitor Visitor) {
-	visitor.VisitLiteral(literal)
-}
-
-
-type Call struct {
-	Args []Node
-	Callee Node
-	Location *tokens.Location
-}
-
-func (call *Call) Loc() *tokens.Location {
-	return call.Location
-}
-
-func (call *Call) Accept(visitor Visitor) {
-	call.Callee.Accept(visitor)
-
-	if len(call.Args) > 0 {
-		for _, arg := range call.Args {
-			arg.Accept(visitor)
-		}
-	}
-
-	visitor.VisitCall(call)
 }

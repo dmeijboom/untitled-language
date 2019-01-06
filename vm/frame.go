@@ -5,7 +5,8 @@ import "dmeijboom/config/tokens"
 type FrameKind int
 
 const (
-	FunctionFrame FrameKind = iota
+	RootFrame FrameKind = iota
+	FunctionFrame
 	BlockFrame
 )
 
@@ -25,4 +26,14 @@ func NewFrame(kind FrameKind, loc *tokens.Location) *Frame {
 		Data: map[string]*Value{},
 		Types: map[string]*Type{},
 	}
+}
+
+func (frame *Frame) Get(name string) *Value {
+	if value, exist := frame.Data[name]; exist {
+		return value
+	} else if frame.Parent != nil {
+		return frame.Parent.Get(name)
+	}
+
+	return nil
 }

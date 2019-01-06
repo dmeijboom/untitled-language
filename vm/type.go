@@ -8,6 +8,7 @@ const (
 	IntegerType
 	FloatType
 	BooleanType
+	FunctionType
 	ObjectType
 )
 

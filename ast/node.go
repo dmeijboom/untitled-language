@@ -9,6 +9,11 @@ type Node interface {
 	Loc() *tokens.Location
 }
 
+type Expr interface {
+	Node
+	exprNode()
+}
+
 type Stmt interface {
 	Node
 	stmtNode()

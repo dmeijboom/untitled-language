@@ -50,7 +50,7 @@ func (lexer *Lexer) ident() string {
 	ident := ""
 
 	for !lexer.eof() &&
-		unicode.IsLetter(lexer.current()) {
+		(unicode.IsLetter(lexer.current()) || lexer.current() == '_') {
 		ident += string(lexer.next())
 	}
 	

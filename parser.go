@@ -194,11 +194,11 @@ func (parser *Parser) init() *ast.Initialize {
 	}
 }
 
-func (parser *Parser) call() ast.Node {
+func (parser *Parser) call() ast.Expr {
 	ident := parser.ident()
 	parser.expect(tokens.LParent)
 
-	args := []ast.Node{}
+	args := []ast.Expr{}
 
 	for !parser.accept(tokens.RParent) {
 		args = append(args, parser.expr())
@@ -207,10 +207,11 @@ func (parser *Parser) call() ast.Node {
 	return &ast.Call{
 		Args: args,
 		Callee: ident,
+		Location: ident.Loc(),
 	}
 }
 
-func (parser *Parser) expr() ast.Node {
+func (parser *Parser) expr() ast.Expr {
 	token := parser.tok()
 
 	if parser.accept(tokens.Keyword, "new") {
@@ -256,7 +257,7 @@ func (parser *Parser) assign() {
 	parser.expect(tokens.Colon)
 	type_ := parser.parseType()
 
-	var value ast.Node
+	var value ast.Expr
 
 	if parser.accept(tokens.Equals) {
 		value = parser.expr()

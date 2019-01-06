@@ -60,7 +60,7 @@ func (typedef *Typedef) Accept(visitor Visitor) {
 type Assign struct {
 	Name *Ident
 	Type *Type
-	Value Node
+	Value Expr
 }
 
 func (assign *Assign) Loc() *tokens.Location {
@@ -74,13 +74,14 @@ func (assign *Assign) Accept(visitor Visitor) {
 		assign.Value.Accept(visitor)
 	}
 
+	visitor.VisitInlineExpr(assign.Value)
 	assign.Name.Accept(visitor)
 	visitor.VisitAssign(assign)
 }
 
 
 type ExprStmt struct {
-	Expr Node
+	Expr Expr
 }
 
 func (exprStmt *ExprStmt) Loc() *tokens.Location {
@@ -89,6 +90,7 @@ func (exprStmt *ExprStmt) Loc() *tokens.Location {
 
 func (exprStmt *ExprStmt) Accept(visitor Visitor) {
 	exprStmt.Expr.Accept(visitor)
+	visitor.VisitInlineExpr(exprStmt.Expr)
 	visitor.VisitExprStmt(exprStmt)
 }
 

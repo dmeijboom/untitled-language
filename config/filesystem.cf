@@ -13,10 +13,8 @@ exports {
         path = "/"
         fstype = "btrfs"
     }
-}
 
-main {
-    let name: string = "Dillen Meijboom"
+    let fs_uuid: string = "Hello World"
     
-    writeln(name)
+    writeln(fs_uuid)
 }
