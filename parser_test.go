@@ -8,7 +8,7 @@ import (
 )
 
 func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
-	if !assert.Equal(t, a == nil, b == nil, "AST nodes should be both nil or both not nil") ||
+	if !assert.Equal(t, b == nil, a == nil, "AST nodes should be both nil or both not nil") ||
 		(a == nil && b == nil) {
 		return
 	}
@@ -16,7 +16,7 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 	type_a := reflect.TypeOf(a).Elem().Name()
 	type_b := reflect.TypeOf(b).Elem().Name()
 
-	assert.Equal(t, type_a, type_b, "AST nodes differ")
+	assert.Equal(t, type_b, type_a, "AST nodes differ")
 
 	switch node_a := a.(type) {
 	case *ast.InitializeField:
@@ -27,7 +27,7 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 		break
 	case *ast.Initialize:
 		node_b := b.(*ast.Initialize)
-		assert.Equal(t, len(node_a.Fields), len(node_b.Fields), "Initialize field count doesn't match")
+		assert.Equal(t, len(node_b.Fields), len(node_a.Fields), "Initialize field count doesn't match")
 
 		for i := 0; i < len(node_a.Fields); i++ {
 			parseCmpNode(t, &node_a.Fields[i], &node_b.Fields[i])
@@ -35,7 +35,7 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 		break
 	case *ast.Block:
 		node_b := b.(*ast.Block)
-		assert.Equal(t, len(node_a.Body), len(node_b.Body), "Block body count doesn't match")
+		assert.Equal(t, len(node_b.Body), len(node_a.Body), "Block body count doesn't match")
 
 		for i := 0; i < len(node_a.Body); i++ {
 			parseCmpNode(t, node_a.Body[i], node_b.Body[i])
@@ -53,20 +53,20 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 		break
 	case *ast.Literal:
 		node_b := b.(*ast.Literal)
-		assert.Equal(t, node_a.Type, node_b.Type, "Literal type doesn't match")
-		assert.Equal(t, node_a.Value, node_b.Value, "Literal value doesn't match")
+		assert.Equal(t, node_b.Type, node_a.Type, "Literal type doesn't match")
+		assert.Equal(t, node_b.Value, node_a.Value, "Literal value doesn't match")
 		break
 	case *ast.Ident:
 		node_b := b.(*ast.Ident)
-		assert.Equal(t, node_a.Value, node_b.Value, "Ident value doesn't match")
+		assert.Equal(t, node_b.Value, node_a.Value, "Ident value doesn't match")
 		break
 	case *ast.Type:
 		node_b := b.(*ast.Type)
 		parseCmpNode(t, node_a.Name, node_b.Name)
-		assert.Equal(t, node_a.Array, node_b.Array, "Type should be an array")
-		assert.Equal(t, node_a.Optional, node_b.Optional, "Type should be optional")
+		assert.Equal(t, node_b.Array, node_a.Array, "Type should be an array")
+		assert.Equal(t, node_b.Optional, node_a.Optional, "Type should be optional")
 
-		assert.Equal(t, len(node_a.Fields), len(node_b.Fields), "Type field-length doesn't match")
+		assert.Equal(t, len(node_b.Fields), len(node_a.Fields), "Type field-length doesn't match")
 
 		for i := 0; i < len(node_a.Fields); i++ {
 			parseCmpNode(t, &node_a.Fields[i], &node_b.Fields[i])
@@ -100,7 +100,7 @@ func parseCmp(t *testing.T, input string, expected []ast.Node) {
 
 	assert.Nil(t, errLexer, "Lexer shouldn't fail")
 	assert.Nil(t, errParser, "Parser should't fail")
-	assert.Equal(t, len(source.Block.Body), len(expected), "AST Node length doesn't match")
+	assert.Equal(t, len(expected), len(source.Block.Body), "AST Node length doesn't match")
 
 	for i := 0; i < len(source.Block.Body); i++ {
 		parseCmpNode(t, source.Block.Body[i], expected[i])
@@ -198,8 +198,8 @@ func TestObjectType(t *testing.T) {
 		}
 	}`)
 
-	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
-	assert.Equal(t, errParser, nil, "Parser shouldn't fail")
+	assert.Equal(t, nil, errLexer, "Lexer shouldn't fail")
+	assert.Equal(t, nil, errParser, "Parser shouldn't fail")
 
 	_, errLexer, errParser = tokenizeAndParse(`testSection {
 		let User: object {
@@ -208,8 +208,8 @@ func TestObjectType(t *testing.T) {
 		}
 	}`)
 
-	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
-	assert.NotEqual(t, errParser, nil, "Object can't be used as a type outside typedef")
+	assert.Equal(t, nil, errLexer, "Lexer shouldn't fail")
+	assert.NotEqual(t, nil, errParser, "Object can't be used as a type outside typedef")
 }
 
 func TestObjectOptional(t *testing.T) {
@@ -219,8 +219,8 @@ func TestObjectOptional(t *testing.T) {
 		}?
 	}`)
 
-	assert.Equal(t, errLexer, nil, "Lexer shouldn't fail")
-	assert.NotEqual(t, errParser, nil, "Optional objects are not allowed in typedefs")
+	assert.Equal(t, nil, errLexer, "Lexer shouldn't fail")
+	assert.NotEqual(t, nil, errParser, "Optional objects are not allowed in typedefs")
 }
 
 func TestCall(t *testing.T) {
