@@ -69,6 +69,16 @@ func main() {
 			},
 		},
 	})
+	machine.Set("array_add", &vm.Value{
+		Type: &vm.Type{Id: vm.FunctionType},
+		Mutable: false,
+		Value: &vm.Function{
+			Name: "add",
+			Func: func(values []*vm.Value) {
+				values[0].Value.(*vm.Array).Add(values[1])
+			},
+		},
+	})
 
 	err = machine.Run()
 

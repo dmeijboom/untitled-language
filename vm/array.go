@@ -1,11 +1,15 @@
 package vm
 
 type Array struct {
-	data []interface{}
+	values []*Value
 }
 
 func NewArray() *Array {
 	return &Array{
-		data: []interface{}{},
+		values: []*Value{},
 	}
+}
+
+func (array *Array) Add(value *Value) {
+	array.values = append(array.values, value)
 }

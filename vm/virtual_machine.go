@@ -73,9 +73,17 @@ func (vm *VirtualMachine) lookupType(name string) *Type {
 	return nil
 }
 
-func (vm *VirtualMachine) lookupFunction(lookup *FunctionLookup) *Function {
-	
-	return nil
+func (vm *VirtualMachine) lookupFunction(lookup *FunctionLookup) (*Function, error) {
+	functionName := lookup.Value.Type.Name + "_" + lookup.Name
+	value := vm.callStack.Frame().Get(functionName)
+
+	if value == nil {
+		return nil, nil
+	} else if value.Type.Id != FunctionType {
+		return nil, fmt.Errorf("Cannot use %s as a function", value.Type.FullName())
+	}
+
+	return value.Value.(*Function), nil
 }
 
 func (vm *VirtualMachine) processOpenSection(instruction *compiler.OpenSection) error {
@@ -255,9 +263,15 @@ func (vm *VirtualMachine) processMakeCall(instruction *compiler.MakeCall) error 
 	var fn *Function
 
 	if isLookup {
-		fn = vm.lookupFunction(lookup)
+		var err error
+		fn, err = vm.lookupFunction(lookup)
 
-		if fn == nil {
+		vm.dataStack.Push(lookup.Value)
+		instruction.Args++
+
+		if err != nil {
+			return err
+		} else if fn == nil {
 			return fmt.Errorf("Cannot find function `%s` for %s", lookup.Name, lookup.Value.Type.FullName())
 		}
 	} else {

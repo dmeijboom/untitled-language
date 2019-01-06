@@ -18,14 +18,14 @@ func lexCmp(t *testing.T, input string, expected []tokens.Token) {
 	actual, err := lexer.Lex()
 
 	assert.Nil(t, err)
-	assert.Equal(t, len(actual), len(expected), "Tokens length doesn't match")
+	assert.Equal(t, len(expected), len(actual), "Tokens length doesn't match")
 
 	for i := 0; i < len(actual); i++ {
 		tok_actual := actual[i]
 		tok_expected := expected[i]
 
-		assert.Equal(t, tok_actual.Kind, tok_expected.Kind, "Token kind doesn't match")
-		assert.Equal(t, tok_actual.Value, tok_expected.Value, "Token value doesn't match")
+		assert.Equal(t, tok_expected.Kind, tok_actual.Kind, "Token kind doesn't match")
+		assert.Equal(t, tok_expected.Value, tok_actual.Value, "Token value doesn't match")
 	}
 }
 
