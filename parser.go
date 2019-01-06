@@ -194,12 +194,37 @@ func (parser *Parser) init() *ast.Initialize {
 	}
 }
 
+func (parser *Parser) call() ast.Node {
+	ident := parser.ident()
+	parser.expect(tokens.LParent)
+
+	args := []ast.Node{}
+
+	for !parser.accept(tokens.RParent) {
+		args = append(args, parser.expr())
+	}
+
+	return &ast.Call{
+		Args: args,
+		Callee: ident,
+	}
+}
+
 func (parser *Parser) expr() ast.Node {
 	token := parser.tok()
 
 	if parser.accept(tokens.Keyword, "new") {
 		parser.pushBack()
 		return parser.init()
+	} else if parser.accept(tokens.Ident) {
+		if parser.accept(tokens.LParent) {
+			parser.pushBack()
+			parser.pushBack()
+			return parser.call()
+		}
+
+		parser.pushBack()
+		return parser.ident()
 	} else if parser.accept(tokens.String) {
 		return &ast.Literal{
 			Type: ast.String,
@@ -264,6 +289,12 @@ func (parser *Parser) typedef() {
 	})
 }
 
+func (parser *Parser) exprStmt() {
+	parser.scope.Add(&ast.ExprStmt{
+		Expr: parser.expr(),
+	})
+}
+
 func (parser *Parser) stmt() {
 	if parser.accept(tokens.Ident) {
 		if parser.accept(tokens.LBracket) {
@@ -295,8 +326,8 @@ func (parser *Parser) stmt() {
 			return
 		}
 	}
-
-	panic(fmt.Errorf("SyntaxError: unexpected %s", parser.tok()))
+	
+	parser.exprStmt()
 }
 
 func (parser *Parser) parseGlobal() {

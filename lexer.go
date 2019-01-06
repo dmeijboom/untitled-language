@@ -159,6 +159,14 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 			token = tokens.Token{Kind: tokens.RBracket}
 			lexer.next()
 			break
+		case '(':
+			token = tokens.Token{Kind: tokens.LParent}
+			lexer.next()
+			break
+		case ')':
+			token = tokens.Token{Kind: tokens.RParent}
+			lexer.next()
+			break
 		case ':':
 			token = tokens.Token{Kind: tokens.Colon}
 			lexer.next()

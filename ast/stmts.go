@@ -34,9 +34,10 @@ func (section *Section) Loc() *tokens.Location {
 }
 
 func (section *Section) Accept(visitor Visitor) {
-	visitor.VisitSection(section)
+	visitor.VisitPreSection(section)
 	section.Name.Accept(visitor)
 	section.Block.Accept(visitor)
+	visitor.VisitSection(section)
 }
 
 
@@ -75,6 +76,21 @@ func (assign *Assign) Accept(visitor Visitor) {
 
 	visitor.VisitAssign(assign)
 }
+
+
+type ExprStmt struct {
+	Expr Node
+}
+
+func (exprStmt *ExprStmt) Loc() *tokens.Location {
+	return exprStmt.Expr.Loc()
+}
+
+func (exprStmt *ExprStmt) Accept(visitor Visitor) {
+	exprStmt.Expr.Accept(visitor)
+	visitor.VisitExprStmt(exprStmt)
+}
+
 
 /**
  * Statement definitions

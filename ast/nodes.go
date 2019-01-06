@@ -117,3 +117,26 @@ func (literal *Literal) Loc() *tokens.Location {
 func (literal *Literal) Accept(visitor Visitor) {
 	visitor.VisitLiteral(literal)
 }
+
+
+type Call struct {
+	Args []Node
+	Callee Node
+	Location *tokens.Location
+}
+
+func (call *Call) Loc() *tokens.Location {
+	return call.Location
+}
+
+func (call *Call) Accept(visitor Visitor) {
+	call.Callee.Accept(visitor)
+
+	if len(call.Args) > 0 {
+		for _, arg := range call.Args {
+			arg.Accept(visitor)
+		}
+	}
+
+	visitor.VisitCall(call)
+}

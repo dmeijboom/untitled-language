@@ -20,13 +20,22 @@ type Instruction interface {
 }
 
 
-type SetSection struct {
+type OpenSection struct {
 	Name string
 	Location *tokens.Location
 }
 
-func (setSection *SetSection) Loc() *tokens.Location {
-	return setSection.Location
+func (openSection *OpenSection) Loc() *tokens.Location {
+	return openSection.Location
+}
+
+
+type CloseSection struct {
+	Location *tokens.Location
+}
+
+func (closeSection *CloseSection) Loc() *tokens.Location {
+	return closeSection.Location
 }
 
 
@@ -126,7 +135,8 @@ func (storeVal *StoreVal) Loc() *tokens.Location {
 /**
  * Instruction definitions
  */
-func (setSection *SetSection) instruction() {}
+func (setSection *OpenSection) instruction() {}
+func (setSection *CloseSection) instruction() {}
 func (makeField *MakeField) instruction() {}
 func (loadType *LoadType) instruction() {}
 func (makeType *MakeType) instruction() {}

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"dmeijboom/config/vm"
 	"dmeijboom/config/compiler"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
@@ -38,10 +39,8 @@ func main() {
 		panic(err)
 	}
 
-	for _, node := range source.Block.Body {
-		data, _ := json.MarshalIndent(node, "", "  ")
-		fmt.Println(reflect.TypeOf(node).Elem().Name() + " " + string(data))
-	}
+	spew.Config.DisablePointerAddresses = true
+	spew.Dump(source.Block.Body)
 
 	fmt.Println("\nCOMPILER\n---")
 

@@ -62,108 +62,176 @@ func (vm *VirtualMachine) lookupType(name string) *Type {
 	return nil
 }
 
+func (vm *VirtualMachine) processOpenSection(instruction *compiler.OpenSection) error {
+	vm.callStack.Push(NewFrame(BlockFrame, instruction.Location))
+	return nil
+}
+
+func (vm *VirtualMachine) processCloseSection(instruction *compiler.CloseSection) error {
+	vm.callStack.Pop()
+	return nil
+}
+
+func (vm *VirtualMachine) processMakeField(instruction *compiler.MakeField) error {
+	fieldType := vm.dataStack.Pop().(*Type)
+    vm.dataStack.Push(&ObjectField{
+        Name: instruction.Name,
+        Type: fieldType,
+	})
+	return nil
+}
+
+func (vm *VirtualMachine) processLoadType(instruction *compiler.LoadType) error {
+	var rtype *Type
+
+    if instruction.Type == compiler.UserType {
+        rtype = vm.lookupType(instruction.TypeName)
+
+        if rtype == nil {
+            panic("Type not found: " + instruction.TypeName)
+        }
+    } else {
+        rtype = vm.convertType(instruction.Type)
+    }
+
+    if !instruction.Array {
+        vm.dataStack.Push(rtype)
+        return nil
+    }
+    
+    vm.dataStack.Push(&Type{
+        Id: ArrayType,
+        GenericParams: []Type{*rtype},
+    })
+	return nil
+}
+
+func (vm *VirtualMachine) processMakeType(instruction *compiler.MakeType) error {
+	def := vm.dataStack.Pop()
+
+    if objectDef, ok := def.(*ObjectDef); ok {
+        vm.callStack.Frame().Types[instruction.Name] = &Type{
+            Id: ObjectType,
+            Name: instruction.Name,
+            ObjectDef: objectDef,
+        }
+    } else {
+        panic("Not supported")
+    }
+	return nil
+}
+
+func (vm *VirtualMachine) processStoreVal(instruction *compiler.StoreVal) error {
+	value := &Value{Mutable: true}
+
+    if instruction.HasValue {
+        value.Value = vm.dataStack.Pop().(interface{})
+    }
+
+    value.Type = vm.dataStack.Pop().(*Type)
+    vm.callStack.Frame().Data[instruction.Name] = value
+
+    println("@TODO: var validation")
+	return nil
+}
+
+func (vm *VirtualMachine) processLoadConst(instruction *compiler.LoadConst) error {
+	vm.dataStack.Push(instruction.Value)
+	return nil
+}
+
+// func (vm *VirtualMachine) processLoadVal(instruction *compiler.LoadVal) error {
+// 	return nil
+// }
+
+func (vm *VirtualMachine) processSetField(instruction *compiler.SetField) error {
+	value := vm.dataStack.Pop().(interface{})
+    object := vm.dataStack.Pop().(*Object)
+    objectType := vm.dataStack.Elem().(*Type)
+    field := objectType.ObjectDef.FieldByName(instruction.Name)
+
+    object.Fields[instruction.Name] = &Value{
+        Type: field.Type,
+        Mutable: true,
+        Value: value,
+    }
+
+    vm.dataStack.Push(object)
+
+	println("@TODO: field validation")
+	return nil
+}
+
+func (vm *VirtualMachine) processNewObject(instruction *compiler.NewObject) error {
+	vm.dataStack.Push(NewObject())
+	return nil
+}
+
+func (vm *VirtualMachine) processMakeObject(instruction *compiler.MakeObject) error {
+	fields := []ObjectField{}
+
+    for i := 0; i < instruction.Fields; i++ {
+        fields = append(fields, *vm.dataStack.Pop().(*ObjectField))
+    }
+
+    vm.dataStack.Push(&ObjectDef{Fields: fields})
+	return nil
+}
+
+func (vm *VirtualMachine) processInitialize(instruction *compiler.Initialize) error {
+	println("@TODO: object validation")
+	return nil
+}
+
+
 func (vm *VirtualMachine) Run() error {
 	for vm.hasInstructions() {
-		instr := vm.peek()
+		var err error
 
-		switch instruction := instr.(type) {
-		case *compiler.SetSection:
-			vm.callStack.Push(NewFrame(BlockFrame, instruction.Location))
+		switch instruction := vm.next().(type) {
+		case *compiler.OpenSection:
+			err = vm.processOpenSection(instruction)
 			break
-		case *compiler.LoadConst:
-			vm.dataStack.Push(instruction.Value)
-			break
-		case *compiler.LoadType:
-			var rtype *Type
-
-			if instruction.Type == compiler.UserType {
-				rtype = vm.lookupType(instruction.TypeName)
-
-				if rtype == nil {
-					panic("Type not found: " + instruction.TypeName)
-				}
-			} else {
-				rtype = vm.convertType(instruction.Type)
-			}
-
-			if !instruction.Array {
-				vm.dataStack.Push(rtype)
-				break
-			}
-			
-			vm.dataStack.Push(&Type{
-				Id: ArrayType,
-				GenericParams: []Type{*rtype},
-			})
+		case *compiler.CloseSection:
+			err = vm.processCloseSection(instruction)
 			break
 		case *compiler.MakeField:
-			fieldType := vm.dataStack.Pop().(*Type)
-			vm.dataStack.Push(&ObjectField{
-				Name: instruction.Name,
-				Type: fieldType,
-			})
+			err = vm.processMakeField(instruction)
 			break
-		case *compiler.MakeObject:
-			fields := []ObjectField{}
-
-			for i := 0; i < instruction.Fields; i++ {
-				fields = append(fields, *vm.dataStack.Pop().(*ObjectField))
-			}
-
-			vm.dataStack.Push(&ObjectDef{Fields: fields})
+		case *compiler.LoadType:
+			err = vm.processLoadType(instruction)
 			break
 		case *compiler.MakeType:
-			def := vm.dataStack.Pop()
-
-			if objectDef, ok := def.(*ObjectDef); ok {
-				vm.callStack.Frame().Types[instruction.Name] = &Type{
-					Id: ObjectType,
-					Name: instruction.Name,
-					ObjectDef: objectDef,
-				}
-			} else {
-				panic("Not supported")
-			}
+			err = vm.processMakeType(instruction)
 			break
 		case *compiler.StoreVal:
-			value := &Value{Mutable: true}
-
-			if instruction.HasValue {
-				value.Value = vm.dataStack.Pop().(interface{})
-			}
-
-			value.Type = vm.dataStack.Pop().(*Type)
-			vm.callStack.Frame().Data[instruction.Name] = value
-
-			println("@TODO: var validation")
+			err = vm.processStoreVal(instruction)
+			break
+		case *compiler.LoadConst:
+			err = vm.processLoadConst(instruction)
+			break
+		// case *compiler.LoadVal:
+		// 	err = vm.processLoadVal(instruction)
+		// 	break
+		case *compiler.SetField:
+			err = vm.processSetField(instruction)
 			break
 		case *compiler.NewObject:
-			vm.dataStack.Push(NewObject())
+			err = vm.processNewObject(instruction)
 			break
-		case *compiler.SetField:
-			value := vm.dataStack.Pop().(interface{})
-			object := vm.dataStack.Pop().(*Object)
-			objectType := vm.dataStack.Elem().(*Type)
-			field := objectType.ObjectDef.FieldByName(instruction.Name)
-
-			object.Fields[instruction.Name] = &Value{
-				Type: field.Type,
-				Mutable: true,
-				Value: value,
-			}
-
-			vm.dataStack.Push(object)
-
-			println("@TODO: field validation")
+		case *compiler.MakeObject:
+			err = vm.processMakeObject(instruction)
 			break
 		case *compiler.Initialize:
-			println("@TODO: object validation")
+			err = vm.processInitialize(instruction)
 			break
 		default:
 			panic(instruction)
 		}
 
-		vm.next()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -9,10 +9,13 @@ type Visitor interface {
 	VisitInitializeField(initField *InitializeField)
 	VisitLiteral(literal *Literal)
 	VisitBlock(block *Block)
+	VisitPreSection(section *Section)
 	VisitSection(section *Section)
 	VisitTypedef(typedef *Typedef)
 	VisitAssign(assign *Assign)
 	VisitSource(source *Source)
+	VisitExprStmt(exprStmt *ExprStmt)
+	VisitCall(call *Call)
 }
 
 type Visitable interface {

@@ -35,7 +35,7 @@ func (compiler *Compiler) isBuiltin(name string) bool {
 }
 
 func (compiler *Compiler) VisitIdent(ident *ast.Ident) {
-
+	
 }
 
 func (compiler *Compiler) VisitField(field *ast.Field) {
@@ -114,9 +114,15 @@ func (compiler *Compiler) VisitBlock(block *ast.Block) {
 
 }
 
-func (compiler *Compiler) VisitSection(section *ast.Section) {
-	compiler.add(&SetSection{
+func (compiler *Compiler) VisitPreSection(section *ast.Section) {
+	compiler.add(&OpenSection{
 		Name: section.Name.Value,
+		Location: section.Loc(),
+	})
+}
+
+func (compiler *Compiler) VisitSection(section *ast.Section) {
+	compiler.add(&CloseSection{
 		Location: section.Loc(),
 	})
 }
@@ -134,6 +140,14 @@ func (compiler *Compiler) VisitAssign(assign *ast.Assign) {
 		HasValue: assign.Value != nil,
 		Location: assign.Loc(),
 	})
+}
+
+func (compiler *Compiler) VisitCall(call *ast.Call) {
+	
+}
+
+func (compiler *Compiler) VisitExprStmt(exprStmt *ast.ExprStmt) {
+	
 }
 
 func (compiler *Compiler) VisitSource(source *ast.Source) {
