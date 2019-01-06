@@ -34,8 +34,8 @@ func (section *Section) Loc() *tokens.Location {
 }
 
 func (section *Section) Accept(visitor Visitor) {
-	visitor.VisitPreSection(section)
 	section.Name.Accept(visitor)
+	visitor.VisitPreSection(section)
 	section.Block.Accept(visitor)
 	visitor.VisitSection(section)
 }
@@ -69,11 +69,12 @@ func (assign *Assign) Loc() *tokens.Location {
 
 func (assign *Assign) Accept(visitor Visitor) {
 	assign.Type.Accept(visitor)
-	
+
 	if assign.Value != nil {
 		assign.Value.Accept(visitor)
 	}
 
+	assign.Name.Accept(visitor)
 	visitor.VisitAssign(assign)
 }
 

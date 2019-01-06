@@ -13,6 +13,10 @@ func (dataStack *DataStack) Push(elem interface{}) {
 }
 
 func (dataStack *DataStack) Pop() interface{} {
+	if len(dataStack.elements) == 0 {
+		panic("data stack is empty")
+	}
+
 	elem := dataStack.Elem()
 	dataStack.elements = dataStack.elements[:len(dataStack.elements)-1]
 	return elem

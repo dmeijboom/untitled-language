@@ -35,12 +35,14 @@ func (compiler *Compiler) isBuiltin(name string) bool {
 }
 
 func (compiler *Compiler) VisitIdent(ident *ast.Ident) {
-	
+	compiler.add(&LoadName{
+		Name: ident.Value,
+		Location: ident.Loc(),
+	})
 }
 
 func (compiler *Compiler) VisitField(field *ast.Field) {
 	compiler.add(&MakeField{
-		Name: field.Name.Value,
 		Location: field.Loc(),
 	})
 }
@@ -77,7 +79,6 @@ func (compiler *Compiler) VisitType(node *ast.Type) {
 		}
 	} else {
 		loadType.Type = UserType
-		loadType.TypeName = node.Name.Value
 	}
 
 	compiler.add(loadType)
@@ -98,7 +99,6 @@ func (compiler *Compiler) VisitInitialize(init *ast.Initialize) {
 
 func (compiler *Compiler) VisitInitializeField(initField *ast.InitializeField) {
 	compiler.add(&SetField{
-		Name: initField.Name.Value,
 		Location: initField.Loc(),
 	})
 }
@@ -116,7 +116,6 @@ func (compiler *Compiler) VisitBlock(block *ast.Block) {
 
 func (compiler *Compiler) VisitPreSection(section *ast.Section) {
 	compiler.add(&OpenSection{
-		Name: section.Name.Value,
 		Location: section.Loc(),
 	})
 }
@@ -129,14 +128,12 @@ func (compiler *Compiler) VisitSection(section *ast.Section) {
 
 func (compiler *Compiler) VisitTypedef(typedef *ast.Typedef) {
 	compiler.add(&MakeType{
-		Name: typedef.Name.Value,
 		Location: typedef.Loc(),
 	})
 }
 
 func (compiler *Compiler) VisitAssign(assign *ast.Assign) {
 	compiler.add(&StoreVal{
-		Name: assign.Name.Value,
 		HasValue: assign.Value != nil,
 		Location: assign.Loc(),
 	})

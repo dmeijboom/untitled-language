@@ -52,6 +52,7 @@ func (type_ *Type) Accept(visitor Visitor) {
 		}
 	}
 
+	type_.Name.Accept(visitor)
 	visitor.VisitType(type_)
 }
 

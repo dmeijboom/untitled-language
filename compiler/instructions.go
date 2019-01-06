@@ -21,7 +21,6 @@ type Instruction interface {
 
 
 type OpenSection struct {
-	Name string
 	Location *tokens.Location
 }
 
@@ -50,7 +49,6 @@ func (makeObject *MakeObject) Loc() *tokens.Location {
 
 
 type LoadType struct {
-	TypeName string
 	Type TypeId
 	Array bool
 	Optional bool
@@ -63,7 +61,6 @@ func (loadType *LoadType) Loc() *tokens.Location {
 
 
 type MakeType struct {
-	Name string
 	Location *tokens.Location
 }
 
@@ -73,7 +70,6 @@ func (makeType *MakeType) Loc() *tokens.Location {
 
 
 type MakeField struct {
-	Name string
 	Location *tokens.Location
 }
 
@@ -83,7 +79,6 @@ func (makeType *MakeField) Loc() *tokens.Location {
 
 
 type SetField struct {
-	Name string
 	Location *tokens.Location
 }
 
@@ -121,8 +116,17 @@ func (loadConst *LoadConst) Loc() *tokens.Location {
 }
 
 
-type StoreVal struct {
+type LoadName struct {
 	Name string
+	Location *tokens.Location
+}
+
+func (loadName *LoadName) Loc() *tokens.Location {
+	return loadName.Location
+}
+
+
+type StoreVal struct {
 	HasValue bool
 	Location *tokens.Location
 }
@@ -139,6 +143,7 @@ func (setSection *OpenSection) instruction() {}
 func (setSection *CloseSection) instruction() {}
 func (makeField *MakeField) instruction() {}
 func (loadType *LoadType) instruction() {}
+func (loadName *LoadName) instruction() {}
 func (makeType *MakeType) instruction() {}
 func (storeVal *StoreVal) instruction() {}
 func (loadConst *LoadConst) instruction() {}

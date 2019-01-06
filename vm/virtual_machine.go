@@ -63,6 +63,7 @@ func (vm *VirtualMachine) lookupType(name string) *Type {
 }
 
 func (vm *VirtualMachine) processOpenSection(instruction *compiler.OpenSection) error {
+	vm.dataStack.Pop()
 	vm.callStack.Push(NewFrame(BlockFrame, instruction.Location))
 	return nil
 }
@@ -73,9 +74,11 @@ func (vm *VirtualMachine) processCloseSection(instruction *compiler.CloseSection
 }
 
 func (vm *VirtualMachine) processMakeField(instruction *compiler.MakeField) error {
+	name := vm.dataStack.Pop().(string)
 	fieldType := vm.dataStack.Pop().(*Type)
+
     vm.dataStack.Push(&ObjectField{
-        Name: instruction.Name,
+        Name: name,
         Type: fieldType,
 	})
 	return nil
@@ -84,11 +87,13 @@ func (vm *VirtualMachine) processMakeField(instruction *compiler.MakeField) erro
 func (vm *VirtualMachine) processLoadType(instruction *compiler.LoadType) error {
 	var rtype *Type
 
+	typeName := vm.dataStack.Pop().(string)
+
     if instruction.Type == compiler.UserType {
-        rtype = vm.lookupType(instruction.TypeName)
+        rtype = vm.lookupType(typeName)
 
         if rtype == nil {
-            panic("Type not found: " + instruction.TypeName)
+            panic("Type not found: " + typeName)
         }
     } else {
         rtype = vm.convertType(instruction.Type)
@@ -107,29 +112,35 @@ func (vm *VirtualMachine) processLoadType(instruction *compiler.LoadType) error 
 }
 
 func (vm *VirtualMachine) processMakeType(instruction *compiler.MakeType) error {
+	name := vm.dataStack.Pop().(string)
 	def := vm.dataStack.Pop()
 
     if objectDef, ok := def.(*ObjectDef); ok {
-        vm.callStack.Frame().Types[instruction.Name] = &Type{
+        vm.callStack.Frame().Types[name] = &Type{
             Id: ObjectType,
-            Name: instruction.Name,
+            Name: name,
             ObjectDef: objectDef,
         }
     } else {
         panic("Not supported")
-    }
+	}
+	
 	return nil
 }
 
 func (vm *VirtualMachine) processStoreVal(instruction *compiler.StoreVal) error {
-	value := &Value{Mutable: true}
+	name := vm.dataStack.Pop().(string)
+	value := &Value{
+		Mutable: true,
+	}
 
     if instruction.HasValue {
         value.Value = vm.dataStack.Pop().(interface{})
     }
 
-    value.Type = vm.dataStack.Pop().(*Type)
-    vm.callStack.Frame().Data[instruction.Name] = value
+	value.Type = vm.dataStack.Pop().(*Type)
+
+    vm.callStack.Frame().Data[name] = value
 
     println("@TODO: var validation")
 	return nil
@@ -140,17 +151,23 @@ func (vm *VirtualMachine) processLoadConst(instruction *compiler.LoadConst) erro
 	return nil
 }
 
+func (vm *VirtualMachine) processLoadName(instruction *compiler.LoadName) error {
+	vm.dataStack.Push(instruction.Name)
+	return nil
+}
+
 // func (vm *VirtualMachine) processLoadVal(instruction *compiler.LoadVal) error {
 // 	return nil
 // }
 
 func (vm *VirtualMachine) processSetField(instruction *compiler.SetField) error {
 	value := vm.dataStack.Pop().(interface{})
-    object := vm.dataStack.Pop().(*Object)
-    objectType := vm.dataStack.Elem().(*Type)
-    field := objectType.ObjectDef.FieldByName(instruction.Name)
+	fieldName := vm.dataStack.Pop().(string)
+	object := vm.dataStack.Pop().(*Object)
+	objectType := vm.dataStack.Elem().(*Type)
+    field := objectType.ObjectDef.FieldByName(fieldName)
 
-    object.Fields[instruction.Name] = &Value{
+    object.Fields[fieldName] = &Value{
         Type: field.Type,
         Mutable: true,
         Value: value,
@@ -168,6 +185,8 @@ func (vm *VirtualMachine) processNewObject(instruction *compiler.NewObject) erro
 }
 
 func (vm *VirtualMachine) processMakeObject(instruction *compiler.MakeObject) error {
+	vm.dataStack.Pop() // unused 'object' typename
+
 	fields := []ObjectField{}
 
     for i := 0; i < instruction.Fields; i++ {
@@ -209,6 +228,9 @@ func (vm *VirtualMachine) Run() error {
 			break
 		case *compiler.LoadConst:
 			err = vm.processLoadConst(instruction)
+			break
+		case *compiler.LoadName:
+			err = vm.processLoadName(instruction)
 			break
 		// case *compiler.LoadVal:
 		// 	err = vm.processLoadVal(instruction)
