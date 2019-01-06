@@ -147,6 +147,10 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 		case '"':
 			token, err = lexer.string()
 			break
+		case '.':
+			token = tokens.Token{Kind: tokens.Interpunct}
+			lexer.next()
+			break
 		case '=':
 			token = tokens.Token{Kind: tokens.Equals}
 			lexer.next()

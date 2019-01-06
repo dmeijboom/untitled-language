@@ -18,6 +18,7 @@ const (
 	Colon
 	Query
 	Equals
+	Interpunct
 	String
 	Boolean
 	Integer
@@ -70,6 +71,8 @@ func (kind TokenKind) String() string {
 		return "Float"
 	case Keyword:
 		return "Keyword"
+	case Interpunct:
+		return "Interpunct"
 	default:
 		panic("Unknown token kind")
 	}

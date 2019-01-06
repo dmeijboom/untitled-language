@@ -167,6 +167,24 @@ func (vm *VirtualMachine) processLoadName(instruction *compiler.LoadName) error 
 	return nil
 }
 
+func (vm *VirtualMachine) processLoadMember(instruction *compiler.LoadMember) error {
+	name := vm.dataStack.Pop().(string)
+	value := vm.dataStack.Pop().(*Value)
+
+	if value.Type.Id != ObjectType {
+		return fmt.Errorf("Cannot use non-object type as object")
+	}
+
+	object := value.Value.(*Object)
+
+	if field, exist := object.Fields[name]; exist {
+		vm.dataStack.Push(field)
+		return nil
+	}
+
+	return fmt.Errorf("%s does not contain the `%s` field", value.Type.Name, name)
+}
+
 func (vm *VirtualMachine) processLoadVal(instruction *compiler.LoadVal) error {
 	name := vm.dataStack.Pop().(string)
 
@@ -275,6 +293,9 @@ func (vm *VirtualMachine) Run() error {
 			break
 		case *compiler.LoadVal:
 			err = vm.processLoadVal(instruction)
+			break
+		case *compiler.LoadMember:
+			err = vm.processLoadMember(instruction)
 			break
 		case *compiler.SetField:
 			err = vm.processSetField(instruction)

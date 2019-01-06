@@ -146,8 +146,14 @@ func (compiler *Compiler) VisitCall(call *ast.Call) {
 	})
 }
 
+func (compiler *Compiler) VisitMember(member *ast.Member) {
+	compiler.add(&LoadMember{
+		Location: member.Loc(),
+	})
+}
+
 func (compiler *Compiler) VisitExprStmt(exprStmt *ast.ExprStmt) {
-	
+	// @TODO: Discard
 }
 
 func (compiler *Compiler) VisitInlineExpr(expr ast.Expr) {

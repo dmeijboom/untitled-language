@@ -87,6 +87,25 @@ func (call *Call) Accept(visitor Visitor) {
 	visitor.VisitCall(call)
 }
 
+
+type Member struct {
+	Object Expr
+	Field Expr
+	Location *tokens.Location
+}
+
+func (member *Member) Loc() *tokens.Location {
+	return member.Location
+}
+
+func (member *Member) Accept(visitor Visitor) {
+	member.Object.Accept(visitor)
+	visitor.VisitInlineExpr(member.Object)
+	member.Field.Accept(visitor)
+	visitor.VisitMember(member)
+}
+
+
 /**
  * Expression definitions
  */
@@ -94,3 +113,4 @@ func (ident *Ident) exprNode() {}
 func (init *Initialize) exprNode() {}
 func (literal *Literal) exprNode() {}
 func (call *Call) exprNode() {}
+func (member *Member) exprNode() {}

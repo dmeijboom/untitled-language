@@ -194,6 +194,18 @@ func (parser *Parser) init() *ast.Initialize {
 	}
 }
 
+func (parser *Parser) member() ast.Expr {
+	object := parser.ident()
+	parser.expect(tokens.Interpunct)
+	field := parser.ident()
+
+	return &ast.Member{
+		Object: object,
+		Field: field,
+		Location: object.Loc(),
+	}
+}
+
 func (parser *Parser) call() ast.Expr {
 	ident := parser.ident()
 	parser.expect(tokens.LParent)
@@ -222,6 +234,10 @@ func (parser *Parser) expr() ast.Expr {
 			parser.pushBack()
 			parser.pushBack()
 			return parser.call()
+		} else if parser.accept(tokens.Interpunct) {
+			parser.pushBack()
+			parser.pushBack()
+			return parser.member()
 		}
 
 		parser.pushBack()

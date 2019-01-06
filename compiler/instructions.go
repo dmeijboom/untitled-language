@@ -145,6 +145,15 @@ func (loadName *LoadName) Loc() *tokens.Location {
 }
 
 
+type LoadMember struct {
+	Location *tokens.Location
+}
+
+func (loadMember *LoadMember) Loc() *tokens.Location {
+	return loadMember.Location
+}
+
+
 type StoreVal struct {
 	HasValue bool
 	Location *tokens.Location
@@ -167,6 +176,7 @@ func (makeType *MakeType) instruction() {}
 func (storeVal *StoreVal) instruction() {}
 func (loadConst *LoadConst) instruction() {}
 func (loadVal *LoadVal) instruction() {}
+func (loadMember *LoadMember) instruction() {}
 func (setField *SetField) instruction() {}
 func (newObject *NewObject) instruction() {}
 func (makeObject *MakeObject) instruction() {}

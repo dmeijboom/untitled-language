@@ -97,6 +97,11 @@ func parseCmpNode(t *testing.T, a ast.Node, b ast.Node) {
 
 		parseCmpNode(t, node_a.Callee, node_b.Callee)
 		break
+	case *ast.Member:
+		node_b := b.(*ast.Member)
+		parseCmpNode(t, node_a.Object, node_b.Object)
+		parseCmpNode(t, node_a.Field, node_b.Field)
+		break
 	default:
 		panic(node_a)
 	}
@@ -319,5 +324,22 @@ func TestInitializer(t *testing.T) {
 				},
 			},
 		}, nil},
+	}})
+}
+
+func TestMember(t *testing.T) {
+	parseCmp(t, `testSection {
+		writeln(obj.field)
+	}`, []ast.Node{&ast.Section{
+		&ast.Ident{"testSection", nil},
+		&ast.Block{[]ast.Node{&ast.ExprStmt{
+			Expr: &ast.Call{
+				Callee: &ast.Ident{"writeln", nil},
+				Args: []ast.Expr{&ast.Member{
+					Object: &ast.Ident{"obj", nil},
+					Field: &ast.Ident{"field", nil},
+				}},
+			},
+		}}, nil},
 	}})
 }

@@ -16,6 +16,7 @@ type Visitor interface {
 	VisitSource(source *Source)
 	VisitExprStmt(exprStmt *ExprStmt)
 	VisitCall(call *Call)
+	VisitMember(member *Member)
 	VisitInlineExpr(expr Expr)
 }
 
