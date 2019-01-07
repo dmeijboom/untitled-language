@@ -59,7 +59,7 @@ func (parser *Parser) expect(kind tokens.TokenKind, value ...interface{}) *token
 	if !parser.hasTokens() {
 		panic(fmt.Errorf("SyntaxError: Unexpected EOF"))
 	} else if !parser.accept(kind) {
-		panic(fmt.Errorf("SyntaxError: expecting type `%s` not `%s`", kind, token.Kind))
+		panic(fmt.Errorf("SyntaxError: expecting type `%s` not %s", kind, token.String()))
 	} else if len(value) > 0 && token.Value != value[0] {
 		panic(fmt.Errorf("SyntaxError: expecting token value %#v not %#v", value[0], token.Value))
 	}
@@ -108,6 +108,7 @@ func (parser *Parser) section() {
 	parser.parseGlobal()
 	body := parser.closeScope()
 	parser.expect(tokens.RBracket)
+	parser.expect(tokens.EndStmt)
 	
 	parser.scope.Add(&ast.Section{
 		Name: ident,
@@ -129,6 +130,7 @@ func (parser *Parser) objectdef() *ast.Type {
 		fieldName := parser.ident()
 		parser.expect(tokens.Colon)
 		fieldType := parser.parseType()
+		parser.expect(tokens.EndStmt)
 
 		fields = append(fields, ast.Field{
 			Name: fieldName,
@@ -180,10 +182,12 @@ func (parser *Parser) init() *ast.Initialize {
 		name := parser.ident()
 
 		parser.expect(tokens.Equals)
+		expr := parser.expr()
+		parser.expect(tokens.EndStmt)
 
 		fields = append(fields, ast.InitializeField{
 			Name: name,
-			Value: parser.expr(),
+			Value: expr,
 			Location: name.Loc(),
 		})
 	}
@@ -285,6 +289,8 @@ func (parser *Parser) assign() {
 		value = parser.expr()
 	}
 
+	parser.expect(tokens.EndStmt)
+
 	parser.scope.Add(&ast.Assign{
 		Name: name,
 		Type: type_,
@@ -306,6 +312,8 @@ func (parser *Parser) typedef() {
 		typeval = parser.parseType()
 	}
 
+	parser.expect(tokens.EndStmt)
+
 	parser.scope.Add(&ast.Typedef{
 		Name: name,
 		Type: typeval,
@@ -313,8 +321,11 @@ func (parser *Parser) typedef() {
 }
 
 func (parser *Parser) exprStmt() {
+	expr := parser.expr()
+
+	parser.expect(tokens.EndStmt)
 	parser.scope.Add(&ast.ExprStmt{
-		Expr: parser.expr(),
+		Expr: expr,
 	})
 }
 

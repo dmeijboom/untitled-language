@@ -134,6 +134,24 @@ func (lexer *Lexer) isKeyword(ident string) bool {
 	return false
 }
 
+func (lexer *Lexer) shouldInsertEndStmt(token *tokens.Token) bool {
+	switch token.Kind {
+		case tokens.Keyword,
+			tokens.RParent,
+			tokens.RBracket,
+			tokens.RSqrBracket,
+			tokens.Query,
+			tokens.Ident,
+			tokens.String,
+			tokens.Boolean,
+			tokens.Integer,
+			tokens.Float:
+			return true
+	}
+
+	return false
+}
+
 func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 	tokenList := []tokens.Token{}
 
@@ -190,6 +208,12 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 			lexer.next()
 			break
 		case '\n':
+			if lexer.shouldInsertEndStmt(&tokenList[len(tokenList)-1]) {
+				token = tokens.Token{Kind: tokens.EndStmt}
+				lexer.next()
+				break
+			}
+
 			lexer.next()
 			continue loop
 		case ' ', '\t', '\r':
@@ -233,6 +257,16 @@ func (lexer *Lexer) Lex() ([]tokens.Token, error) {
 			Column: start_pos,
 		}
 		tokenList = append(tokenList, token)
+	}
+
+	if lexer.shouldInsertEndStmt(&tokenList[len(tokenList)-1]) {
+		tokenList = append(tokenList, tokens.Token{
+			Kind: tokens.EndStmt,
+			Loc: &tokens.Location{
+				Line: lexer.line,
+				Column: lexer.col,
+			},
+		})
 	}
 
 	return tokenList, nil

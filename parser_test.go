@@ -136,7 +136,8 @@ func TestSection(t *testing.T) {
 
 	parseCmp(t, `testSection {
 
-	} example {}`, []ast.Node{
+	}
+	example {}`, []ast.Node{
 		&ast.Section{&ast.Ident{"testSection", nil}, &ast.Block{[]ast.Node{}, nil}},
 		&ast.Section{&ast.Ident{"example", nil}, &ast.Block{[]ast.Node{}, nil}},
 	})

@@ -23,6 +23,7 @@ const (
 	Boolean
 	Integer
 	Float
+	EndStmt
 )
 
 type Token struct {
@@ -73,6 +74,8 @@ func (kind TokenKind) String() string {
 		return "Keyword"
 	case Interpunct:
 		return "Interpunct"
+	case EndStmt:
+		return "EndStmt"
 	default:
 		panic("Unknown token kind")
 	}
